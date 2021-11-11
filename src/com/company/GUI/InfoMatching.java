@@ -19,7 +19,7 @@ public class InfoMatching extends JPanel {// step1.fifo matching.
 
     public InfoMatching(String name,HashSet<String> set){
         String[] choice = set.toArray(new String[set.size()]);
-
+        Arrays.sort(choice);
         //declare
 
         JLabel content = new JLabel(name);
@@ -29,10 +29,10 @@ public class InfoMatching extends JPanel {// step1.fifo matching.
         // option
 
         upperPannel.setLayout(new FlowLayout(FlowLayout.LEFT,10,20));
-        upperPannel.setSize(250,100);
-        middlePanel.setLayout(new GridLayout(3,1));
+        upperPannel.setSize(250,150);
+        middlePanel.setLayout(new GridLayout(4,1));
         setLayout(new FlowLayout());
-        setPreferredSize(new Dimension(250,300));
+        setPreferredSize(new Dimension(200,300));
         setVisible(true);
 
         //add
@@ -60,7 +60,8 @@ public class InfoMatching extends JPanel {// step1.fifo matching.
         posName = new ArrayList<>();
         for(int i=0; i<num; i++){
             Panel entry = new Panel();
-            entry.add(new JLabel(String.valueOf(i)));
+            String labelName = String.valueOf(i+1)+" ";
+            entry.add(new JLabel(labelName));
             posName.add(choice[0]);
             entry.setPreferredSize(new Dimension(250,50));
             JComboBox<String> choiceList= new JComboBox<>(choice);

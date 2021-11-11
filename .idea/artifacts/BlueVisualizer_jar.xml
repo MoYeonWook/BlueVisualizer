@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="BlueVisualizer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/BlueVisualizer_jar</output-path>
+    <root id="archive" name="BlueVisualizer.jar">
+      <element id="module-output" name="BlueVisualizer" />
+    </root>
+  </artifact>
+</component>

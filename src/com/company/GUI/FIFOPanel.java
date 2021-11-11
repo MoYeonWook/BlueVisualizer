@@ -1,66 +1,66 @@
 package com.company.GUI;
 
+import com.company.BlueVisualizer;
 import com.company.FIFO;
 import com.company.Instance;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.math.BigInteger;
 
 public class FIFOPanel extends JScrollPane {
     FIFO fifo;
     JTree Ftree;
 
-    public FIFOPanel(FIFO fifo, int status, int num) {
+    public FIFOPanel(FIFO fifo, int status, int num,boolean binToHex) {
 
-        setPreferredSize(new Dimension(1000/num, 400));
-        if (fifo == null||fifo.getName()==null) {
-            getViewport().setBackground(Color.WHITE);
-            return;
-        }else if(status ==0 ) {
-            getViewport().setBackground(Color.red);
+        setPreferredSize(new Dimension(950/(num), 450));
+        if (fifo == null||fifo.getName()==null) {getViewport().setBackground(Color.white); return;}
+        this.fifo = fifo;
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(fifo.getName());
+        setChildNode((Instance)fifo,root,binToHex);
+        Ftree = new JTree(root);
+        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) Ftree.getCellRenderer();
+        System.out.println(fifo.getName()+" "+fifo.getBit());
+        if(status ==0 ) {
+            getViewport().setBackground(Color.pink);
+            setBorder(new LineBorder(Color.red,5));
             return;
         }else if(status ==1) {
-            getViewport().setBackground(Color.blue);
+            getViewport().setBackground(Color.pink);
+            setBorder(new LineBorder(Color.blue,5));
             return;
-        } else if(!(fifo.full)){
+        } else if(!(fifo.full)||fifo.empty){
             getViewport().setBackground(Color.PINK);
             return;
         }else if((!fifo.deq)&&(!fifo.enq)){
             getViewport().setBackground(Color.gray);
+//            setBorder(new LineBorder(Color.black));
+            renderer.setBackgroundNonSelectionColor(Color.gray);
         }else{
             getViewport().setBackground(Color.WHITE);
         }
 
-        this.fifo = fifo;
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(fifo.getName());
-        setChildNode((Instance)fifo,root);
-        Ftree = new JTree(root);
-//        Ftree.addTreeSelectionListener(new TreeSelectionListener() {
-//            @Override
-//            public void valueChanged(TreeSelectionEvent e) {
-//
-//            }
-//        })
         Ftree.setOpaque(false);
         setViewportView(Ftree);
-         // background 설정 다시 필요.
-
-//        getContentPane().setLayout(new BorderLayout());
-//        getContentPane().add(new JScrollPane(xTree), "Center");
     }
 
-    static void setChildNode(Instance parent,DefaultMutableTreeNode nodeP){
+    static void setChildNode(Instance parent,DefaultMutableTreeNode nodeP,Boolean binToHex){
         if(parent.getChildren()==null) {System.out.println(parent.getName()); return;}
         for(Instance child: parent.getChildren()){
-            DefaultMutableTreeNode nodeC = new DefaultMutableTreeNode(child.getName()+" "+child.getBit());
+            DefaultMutableTreeNode nodeC = new DefaultMutableTreeNode(child.getName()+" "+ BlueVisualizer.convertBin(child.getBit(),binToHex));
             nodeP.add(nodeC);
-            setChildNode(child,nodeC);
+            setChildNode(child,nodeC,binToHex);
         }
         return;
     }
+
+
+
 }

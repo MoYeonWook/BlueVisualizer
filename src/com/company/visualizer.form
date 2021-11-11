@@ -16,7 +16,7 @@
           </grid>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="none" title="sdsfd"/>
         <children/>
       </grid>
       <hspacer id="1de04">

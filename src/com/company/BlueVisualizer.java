@@ -3,14 +3,19 @@ package com.company;
 
 import com.company.GUI.FIFOPanelSet;
 import com.company.GUI.InfoMatching;
+import com.company.GUI.RegPanelSet;
+import com.company.GUI.UserRegPanelSet;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -18,39 +23,58 @@ import java.util.regex.Pattern;
 
 public class BlueVisualizer {
     // data after parsing
-    static public HashMap<String, Type> typeMap;
-    static public HashMap<String,String> interfaceMap;
-    static public HashMap<String,String> symbolMap;
-    static public List<HashMap<String,FIFO>> Timeline = new ArrayList<>();
+    static public HashMap<String, Type> typeMap = new HashMap<>();
+    static public HashMap<String,String> interfaceMap = new HashMap<>();
+    static public HashMap<String,String> symbolMap = new HashMap<>();
+    static public List<HashMap<String,Instance>> Timeline = new ArrayList<>();
     static public HashSet<String> FIFOSet = new HashSet<>(); //candidate for user to choose to visualize
     static public HashSet<String> regSet= new HashSet<>(); // candidate for user to choose to visualize
     static private String timeUnit;
 
 
-    public static List<String> FIFOList; // user's choice will be saved here
-    static protected List<String> regList; //user's choice will be saved here
-    static private String msg="";
-    static private int cycle = 1;
-
-    //us
-    static protected HashMap<Integer,Integer> dataHazardCnt = new HashMap<>();
-    static protected HashMap<Integer,Integer> controlHazardCnt = new HashMap<>();
-    static protected HashMap<Integer,Integer> instTotCnt = new HashMap<>();
-    static int datacnt = 0;
-    static int controlcnt =0;
-    static int instCnt =0;
+    static List<String> FIFOList; // user's choice will be saved here
+    static List<String> regList; //user's choice will be saved here
+    static List<String> rfile = new ArrayList<>();
+    static public String msg="";
+    static public int cycle = 1;
+    static public boolean binToHex = false;
     static JFrame frame;
+    static LeftSubPanel leftSubPanel;
+    static RightSubPanel rightSubPanel;
+
+    //statistics
+    static protected HashMap<Integer,Integer> dataHazardRec = new HashMap<>();
+    static protected HashMap<Integer,Integer> controlHazardRec = new HashMap<>();
+    static protected HashMap<Integer,Integer> instRec = new HashMap<>();
+    static int dataCnt = 0;
+    static int controlCnt =0;
+    static int instCnt =0;
+
+    // Font & Size
+    static Font titleFont = new Font("Franklin Gothic Heavy",Font.PLAIN,100);
+    static Font title2 = new Font("Candara Light",Font.PLAIN,30);
+    static Dimension initialSize = new Dimension(500,450);
+    static Dimension frameSize = new Dimension(1550,930);
+    static Dimension topPanelSize = new Dimension(1400,100);
+    static Dimension leftPanelSize = new Dimension(1000,750);
+    static Dimension rightPanelSize = new Dimension(400,750);
+    static Dimension rightUpperPanelSize = new Dimension(360,490);
+    static Dimension rightBottomPanelSize = new Dimension(360,220);
+
+
 
     public static void main(String[]args) throws IOException {
-        typeMap = new HashMap<>();
-        interfaceMap = new HashMap<>();
-        symbolMap = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader("C:/Users/ADMIN/Desktop/instance.txt"));
+        String addr = "C:/Users/ADMIN/Desktop/3stages/";
+        BufferedReader br = new BufferedReader(new FileReader(addr+"instance.txt"));
+
+        System.out.println("Interface map parsing...");
         mkInterfaceMap(br);
-        interfaceMap.entrySet().forEach(System.out::println);
         br.close();
-        br= new BufferedReader(new FileReader("C:/Users/ADMIN/Desktop/type.txt"));
+
+        System.out.println("Instance symbol parsing...");
+        br= new BufferedReader(new FileReader(addr+"type.txt"));
         mkTypeMap(br);
+
         typeMap.entrySet().forEach(a->{
             Type type = a.getValue();
             System.out.println(type.intf);
@@ -59,20 +83,18 @@ public class BlueVisualizer {
             }
             System.out.println();
         });
-        br= new BufferedReader(new FileReader("C:/Users/ADMIN/Desktop/dump.vcd"));
+        System.out.println("Initializing the timeline...");
+        br= new BufferedReader(new FileReader(addr+"3stage"));
         mkSMTL(br);
+
+
         for(Map.Entry<String,String> k : symbolMap.entrySet()) System.out.println(k.getKey()+" "+k.getValue());
 
-        for(int i=2; i< 500; i++) {
-            FIFO tmp = readTimeline(i, "f2d");
-            System.out.println(i + "" +tmp.full + "" + tmp.enq + "" + tmp.deq);
-        }
-
-
+        System.out.println("Choose FIFO or register to visualize in order");
         frame = new JFrame("Visualizer");
 
-        frame.setLayout(new FlowLayout());
-        JLabel description= new JLabel("Choose the number of FIFO and register to visualize and match the name each.");
+        JLabel description1 = new JLabel("Choose the number of FIFO and register to visualize.");
+        JLabel description2 = new JLabel("Then match the name each.");
         //Main Panel
         JLabel title = new JLabel("BlueVisualizer");
 
@@ -84,22 +106,27 @@ public class BlueVisualizer {
         submit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                System.out.println("Visualizing Chosen data...");
                 FIFOList = manageFIFO.getPosName();
                 regList = manageReg.getPosName();
-                for(int i =2; i<Timeline.size();i++) stallCnt(i);
-
-                frame.setSize(new Dimension(1100,800));
+                for(int i =0;i<32;i++)rfile.add("rfile"+i); // add all the name of cpu register
+                for(int i =2; i<Timeline.size();i++) initializeStat(i); // start at i = 2, cycle 1 has already initialized.
+                frame.setPreferredSize(frameSize);
+                frame.pack();
                 redraw();
             }
         });
-        introPanel.add(description);
+        introPanel.add(description1);
+        introPanel.add(description2);
         introPanel.add(manageFIFO);
         introPanel.add(manageReg);
         introPanel.add(submit);
-        frame.add(description);
+        frame.setLayout(new FlowLayout(1));
+        frame.add(description1);
+        frame.add(description2);
         frame.add(introPanel);
         frame.add(submit);
-        frame.setPreferredSize(new Dimension(500,500));
+        frame.setPreferredSize(initialSize);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
@@ -188,10 +215,10 @@ public class BlueVisualizer {
                      info = st.split(" ");
                      symbol = info[3];
                      name = info[4].substring(0, info[4].indexOf('_'));
-                    System.out.println(symbol + name);
+//                    System.out.println(symbol + name);
                     FIFOSet.add(name);
                     symbolMap.put(symbol, name);
-                } else if (st.matches("(.*) rfile_[0-9]*_ehrReg (.*)")) {// register
+                } else if (st.matches("(.*) rfile_[0-9]*_ehrReg (.*)|(.*) rfile_[0-9]* (.*)")) {// register
                     info = st.split(" ");
                     String[] rawName = info[4].split("_");
                     symbol = info[3];
@@ -201,18 +228,23 @@ public class BlueVisualizer {
                      info = st.split(" ");
                      symbol = info[3];
                      name = info[4].substring(0, info[4].indexOf('_'));
-                    symbolMap.put(symbol, "f-" + name);
-                } else if (st.matches("(.*)_enqP_wires_0 (.*)")) {
+                    symbolMap.put(symbol, "fu-" + name);
+                } else if (st.matches("(.*)_empty_ehrReg (.*)")) {
                     info = st.split(" ");
                     symbol = info[3];
                     name = info[4].substring(0, info[4].indexOf('_'));
-                    symbolMap.put(symbol, "e-" + name);
+                    symbolMap.put(symbol, "em-" + name);
+                }else if (st.matches("(.*)_enqP_wires_0 (.*)")) {
+                    info = st.split(" ");
+                    symbol = info[3];
+                    name = info[4].substring(0, info[4].indexOf('_'));
+                    symbolMap.put(symbol, "en-" + name);
                 } else if (st.matches("(.*)_deqP_wires_0 (.*)")) {
                     info = st.split(" ");
                     symbol = info[3];
                     name = info[4].substring(0, info[4].indexOf('_'));
-                    symbolMap.put(symbol, "d-" + name);
-                    System.out.print("d-" + name+" "+symbol);
+                    symbolMap.put(symbol, "de-" + name);
+//                    System.out.print("d-" + name+" "+symbol);
                 }else if(st.matches("(.*) [a-zA-Z0-9]* \\$end")){
                     info = st.split(" ");
                     if(info.length<5) continue;
@@ -223,31 +255,29 @@ public class BlueVisualizer {
                 }else if(st.matches("(.*)enddefinitions(.*)")) defFlag= false;
             }else {// record value
                 String name ="";
-                if(st.matches("0!")){// to determine the cycle start of the negedge.
+                if(st.matches("0!")){// to determine the cycle start of the negedge clock
                     pos++;
                     Timeline.add(new HashMap<>());
                     initializeFlag= false;
                 }
 
                 if(initializeFlag)  continue;
-
-
                   if(st.matches("#[0-9]*")) continue;
                   if(st.matches("(0|1|x)(.*)")){//for bit scalar
                     name = symbolMap.get(st.substring(1));
                     String bit = st.substring(0,1);
                     if(name==null) continue;
-                    else System.out.println(name);
-                    String flag = name.substring(0,2);//to check for full, enq, deq
-                    if(flag.matches("(d|e|f)-")){
-                        String fifoSymbol = name.substring(2);
-                        if(flag.equals("d-")) System.out.println(flag);
+//                    else System.out.println(name);
+                    String flag = name.substring(0,2);//to check for full, enq, deq, empty
+                    if(flag.matches("(de|en|fu|em)")){
+                        String fifoSymbol = name.substring(3);
+//                       System.out.println(cycle+" "+flag+" "+fifoSymbol);
                         boolean val = bit.equals("1");
-                        FIFO currInst= Timeline.get(pos).get(fifoSymbol);// check whether there is already made FIFO instance.
+                        FIFO currInst= (FIFO) Timeline.get(pos).get(fifoSymbol);// check whether there is already made FIFO instance.
                         if(currInst==null){//find the closest FIFO instance and bring it to current position
                             int tempos = pos;
                             FIFO befInst = null;
-                            while(befInst==null&&tempos>0) befInst=Timeline.get(tempos--).get(fifoSymbol);
+                            while(befInst==null&&tempos>0) befInst= (FIFO) Timeline.get(tempos--).get(fifoSymbol);
                             if(tempos==0) currInst = new FIFO(); //temporary FIFO , will be initialized in the same cycle
                             else {
                                 currInst = new FIFO(befInst.name, befInst.bit, befInst.intf); //
@@ -255,19 +285,21 @@ public class BlueVisualizer {
                                 currInst.deq = befInst.deq;
                                 currInst.enq = befInst.enq;
                                 currInst.full = befInst.full;
+                                currInst.empty = befInst.empty;
                             }
                         }
 
-                        if(flag.charAt(0)=='f') currInst.full= val;
-                        else if(flag.charAt(0)=='d') currInst.deq= val;
-                        else currInst.enq = val;
-                        if(name.equals("d-f2d"))System.out.println(pos+" "+st+" "+name+" "+val+" "+currInst.deq);
+                        if(flag.substring(0,2).equals("fu") ){currInst.full= val; currInst.empty =!val;}
+                        else if(flag.substring(0,2).equals("de")) currInst.deq= val;
+                        else if(flag.substring(0,2).equals("em")) {currInst.empty= val; currInst.full =!val;}
+                        else if(flag.substring(0,2).equals("en"))  currInst.enq = val;
+//                        System.out.println(pos+" "+fifoSymbol+" "+name+" "+val+" "+currInst.empty);
                         Timeline.get(pos).put(fifoSymbol,currInst);
                     }
 
                     FIFO tmp = new FIFO(name,bit,interfaceMap.getOrDefault(name,"reg"));
                     Timeline.get(pos).put(name,tmp);
-                }else{//for bit vector
+                }else if(st.matches("b[0-9](.*)")){//for bit vector
                     String[] value= st.split(" ");
                     name = symbolMap.get(value[1]);
                     int tempos = pos;
@@ -277,18 +309,19 @@ public class BlueVisualizer {
                     FIFO tmp = new FIFO(name,bit, interfaceMap.getOrDefault(name,"reg"));
                     tmp.getSub();
 
-                    //setting full enq deq status for FIFO
+                    //setting full empty enq deq status for FIFO
                    if(tempos>0&&!tmp.intf.equals("reg")){
 //                       System.out.println(name+" "+tempos);
-                       FIFO befInst =Timeline.get(tempos--).get(name);//check if FIFO instance was already made;
-                       while(befInst==null&&tempos>=0) befInst=Timeline.get(tempos--).get(name);
+                       FIFO befInst =(FIFO)Timeline.get(tempos--).get(name);//check if FIFO instance was already made;
+                       while(befInst==null&&tempos>=0) befInst=(FIFO)Timeline.get(tempos--).get(name);
                        if(befInst!=null) {
                            tmp.full = befInst.full;
+                           tmp.empty = befInst.empty;
                            tmp.deq = befInst.deq;
                            tmp.enq = befInst.enq;
                        }
                    }
-
+                    System.out.println(name);
                     Timeline.get(pos).put(name,tmp);
                 }
         }
@@ -296,13 +329,14 @@ public class BlueVisualizer {
     }
 
     public static FIFO readTimeline(int idx,String name){
-        FIFO target = Timeline.get(idx).get(name);
+        FIFO target = (FIFO) Timeline.get(idx).get(name);
         if(target==null) return readTimeline(idx-1,name);
         else return target;
     }
 
     public static void cycleFinder(String mode){
         int result = cycle;
+        msg ="";
         switch(mode){
             case "first":
                 result = 1;
@@ -337,60 +371,82 @@ public class BlueVisualizer {
     public static int findStall(int i, int dir) {//이전 또는 이후 stall 발생 위치. i : cycle dir: +1/-1 탐색할 방향.
         HashMap<String, FIFO> fifoInfo;
         int current = i;
-        while (i > 1 && i < Timeline.size()) {
+        while (i > 0 && i < Timeline.size()) {
             i+=dir;
             int status =stallStatus(i);
-            if(status==0||status ==1) return i;
+            if(status!=-1) return i;
 
         }
         return current;
     }
 
-    public static void stallCnt(int cycle){ // 각 cycle마다 stall 발생 횟수  또한 visualize 전 cycle 별로 빠진 FIFO가 있으면 앞 cycle에서 가져와 채워 넣는다.
+    public static void initializeStat(int cycle){ // 각 cycle마다 stall 발생 횟수  또한 visualize 전 cycle 별로 빠진 FIFO가 있으면 앞 cycle에서 가져와 채워 넣는다.
                                             // vcd 파일에서 cycle별로 값의 변화가 없으면 기록되지 않으므로 cycle 별로 hashmap에 없는 fifo, register가 존재한다.
 
-        HashMap<String, FIFO> preFIFOInfo = Timeline.get(cycle-1);
-        HashMap<String, FIFO> currFIFOInfo =Timeline.get(cycle);
+        HashMap<String, Instance> preFIFOInfoMap = Timeline.get(cycle-1);
+        HashMap<String, Instance> currFIFOInfoMap =Timeline.get(cycle);
 
-        for(String str: FIFOList){ // cycle 별로 빠진 FIFO가 있다면 앞에서 가져오기.
-            if(currFIFOInfo.get(str)==null){
-                if(preFIFOInfo.get(str)==null) return;
-                currFIFOInfo.put(str,preFIFOInfo.get(str));
+        for(String str: regList){ //for register.
+            if(currFIFOInfoMap.get(str)==null){
+                if(preFIFOInfoMap.get(str)==null) continue;
+                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
+                currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
             }
-            Timeline.set(cycle,currFIFOInfo);
+
         }
 
-        String fstFifo = FIFOList.get(0);
-        String sndFifo = FIFOList.get(1);
-        String lastFifo = FIFOList.get(FIFOList.size()-1);
+        for(String str: rfile){ //for register.
+            if(currFIFOInfoMap.get(str)==null){
+                if(preFIFOInfoMap.get(str)==null) continue;
+                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
+                currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
+            }
 
-        if(! currFIFOInfo.get(fstFifo).full) controlHazardCnt.put(cycle,++controlcnt);
-        else if( ! currFIFOInfo.get(sndFifo).full && preFIFOInfo.get(fstFifo).full) dataHazardCnt.put(cycle,++datacnt);
+        }
 
-        if(currFIFOInfo.get(lastFifo).full) instTotCnt.put(cycle,++instCnt);
+        for(String str: FIFOList){ // if there is empty FIFO record, get it from the previous one.
+            if(currFIFOInfoMap.get(str)==null){
+                if(preFIFOInfoMap.get(str)==null) return; // to ignore empty FIFO in the early cycle.
+                currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
+            }
+        }
+        Timeline.set(cycle,currFIFOInfoMap);
+        String fstFifoInfo = FIFOList.get(0);
+        String sndFifoInfo = FIFOList.get(1);
+        String lastFifoInfo = FIFOList.get(FIFOList.size()-1);
+
+        FIFO currFstFifo = (FIFO) currFIFOInfoMap.get(fstFifoInfo);
+        FIFO currSndFifo = (FIFO) currFIFOInfoMap.get(sndFifoInfo);
+        FIFO preFstFifo = (FIFO) preFIFOInfoMap.get(fstFifoInfo);
+        FIFO preSndFifo = (FIFO) preFIFOInfoMap.get(sndFifoInfo);
+        FIFO currlastFifo = (FIFO) currFIFOInfoMap.get(lastFifoInfo);
+
+        if(!currFstFifo.full || currFstFifo.empty) controlHazardRec.put(cycle,++controlCnt);
+        else if( preFstFifo.full&&!currSndFifo.full) dataHazardRec.put(cycle,++dataCnt);
+        if(currlastFifo.full||!currlastFifo.empty) instRec.put(cycle,++instCnt);
     }
 
-    public static int stallStatus(int cycle){
+    public static int  stallStatus(int cycle){
         int num=cycle;
         int result = -1;
-        int control= controlHazardCnt.getOrDefault(cycle,0);
-        int data=dataHazardCnt.getOrDefault(cycle,0);
+        int control= controlHazardRec.getOrDefault(cycle,0);
+        int data= dataHazardRec.getOrDefault(cycle,0);
         int inst;
 
         if(control != 0){
-            msg+="Control Hazard occurred at cycle"+cycle+"\n";
+            msg+="Control Hazard occurred at cycle "+cycle+"\n";
             result = 0;// control hazard
         }
         else if(data != 0){
-            msg+="Data Hazard occurred at cycle"+cycle+"\n";
+            msg+="Data Hazard occurred at cycle "+cycle+"\n";
             result = 1;// data hazard
         }
 
-        while((control=controlHazardCnt.getOrDefault(num--,0))== 0&&num!=0); // 현재 cycle보다 작은 cycle에서 control, data hazard 수와 instruction 수를 찾는다.
+        while((control= controlHazardRec.getOrDefault(num--,0))== 0&&num>0); // 현재 cycle보다 작은 cycle에서 control, data hazard 수와 instruction 수를 찾는다.
             num = cycle;
-        while((data=dataHazardCnt.getOrDefault(num--,0))== 0&&num !=0);
+        while((data= dataHazardRec.getOrDefault(num--,0))== 0&&num >0);
             num = cycle;
-        while((inst=instTotCnt.getOrDefault(num--,0))== 0&&num != 0);
+        while((inst= instRec.getOrDefault(num--,0))== 0&&num > 0);
 
         msg += "Total control Hazards: "+ control+"\n";
         msg += "Total data Hazards: "+ data+"\n";
@@ -398,27 +454,81 @@ public class BlueVisualizer {
         return result;
     }
 
-    // GUI class and information.
-    public static class LeftSubPanel extends Panel {
-        public LeftSubPanel() {
+    public static String convertBin(String bin, boolean binToHex){
+        int idx =-1;// no leading zero;
+        for(int i=0; i<bin.length();i++){
+            if(bin.charAt(i)=='0') idx = i;
+            else break;
+        }
+        if(idx == bin.length()-1) bin = "0";
+        else bin = bin.substring(idx+1);
 
-            // leftSubPanel
-            msg ="";
-            int status = stallStatus(cycle);
+
+        if(binToHex)  return new BigInteger(bin, 2).toString(16);
+        else return bin;
+    }
+
+
+    // GUI class and information.
+    public static class TopPanel extends JPanel {
+        private JLabel title = new JLabel("BlueVisualizer");
+        private JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        private JButton binHexButton;
+        public TopPanel(){
+            binHexButton = (binToHex)? new JButton("Hexadecimal"):new JButton("Binary");
+            title.setFont(titleFont);
+            title.setOpaque(true);
+            title.setForeground(new Color(0,176,240));// light blue
+            buttonPanel.setPreferredSize(new Dimension(160,30));
+            binHexButton.setPreferredSize(new Dimension(130,30));
+            binHexButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    binToHex =!binToHex;
+                    if(binToHex)binHexButton.setText("Hexadecimal");
+                    else binHexButton.setText("Binary");
+                    redraw();
+                }
+            });
+
+            setLayout(new BorderLayout());
+            setPreferredSize(topPanelSize);
+
+            buttonPanel.add(binHexButton);
+            add(title,BorderLayout.WEST);
+            add(buttonPanel,BorderLayout.EAST);
+        }
+    }
+
+    public static class LeftSubPanel extends Panel {
+
+        private FIFOPanelSet fifoPanelSet;
+        private Panel control = new Panel();
+        private Panel buttons = new Panel(new FlowLayout());
+        private Panel cycleInfo = new Panel(new FlowLayout());
+        private JLabel cycletxt = new JLabel("Cycle: ");
+        private JTextField cycleNum = new JTextField(String.valueOf(cycle),10);
+        private JTextArea description= new JTextArea(msg,5,50);
+        private JButton fir = new JButton("fir");
+        private JButton prs = new JButton("bes");
+        private JButton pre = new JButton("bef");
+        private JButton nxt = new JButton("nxt");
+        private JButton nxs = new JButton("nxs");
+        private JButton lst = new JButton("lst");
+
+        public LeftSubPanel(int status) {
+
+            // declare
+            fifoPanelSet = new FIFOPanelSet(FIFOList.size(),status, FIFOList, Timeline.get(cycle),binToHex);
+
+            //settings
             setLayout(new FlowLayout());
-            setPreferredSize(new Dimension(1000,1200));
-            FIFOPanelSet fifoPanelSet = new FIFOPanelSet(FIFOList.size(),status, FIFOList, Timeline.get(cycle));
-            Panel control = new Panel();
-            control.setLayout(new FlowLayout());
-            JButton fir = new JButton("fir");
-            JButton prs = new JButton("bes");
-            JButton pre = new JButton("bef");
-            JButton nxt = new JButton("nxt");
-            JButton nxs = new JButton("nxs");
-            JButton lst = new JButton("lst");
-            JLabel cycletxt = new JLabel("Cycle: ");
-            JTextField cycleNum = new JTextField(String.valueOf(cycle),10);
-            JTextArea description = new JTextArea(msg,5,50);
+            setPreferredSize(leftPanelSize);
+            control.setLayout(new BorderLayout());
+            control.setPreferredSize(new Dimension(leftPanelSize.width,50));
+            description.setPreferredSize(new Dimension(leftPanelSize.width,200));
+            description.setFont(new Font("",Font.PLAIN,15));
+
             fir.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -472,25 +582,67 @@ public class BlueVisualizer {
                 }
             });
 
-            control.add(fir);
-            control.add(prs);
-            control.add(pre);
-            control.add(nxt);
-            control.add(nxs);
-            control.add(lst);
-            control.add(cycletxt);
-            control.add(cycleNum);
+            buttons.add(fir);
+            buttons.add(prs);
+            buttons.add(pre);
+            buttons.add(nxt);
+            buttons.add(nxs);
+            buttons.add(lst);
+            cycleInfo.add(cycletxt,BorderLayout.EAST);
+            cycleInfo.add(cycleNum,BorderLayout.EAST);
 
+            control.add(buttons,BorderLayout.WEST);
+            control.add(cycleInfo,BorderLayout.EAST);
             add(fifoPanelSet);
             add(control);
             add(description);
         }
 
+        public void setFifoPanelSet(FIFOPanelSet fifoPanelSet) {
+            this.fifoPanelSet = fifoPanelSet;
+        }
+
+    }
+
+    public static class RightSubPanel extends JPanel {
+        public JPanel bottomPanel = new JPanel();
+        public JPanel topPanel = new JPanel();
+        public UserRegPanelSet userRegPanelSet;
+        public RegPanelSet regPanelBottom1;
+        public RegPanelSet regPanelBottom2;
+        public RightSubPanel(){
+
+            HashMap<String, Instance> reginfo = Timeline.get(cycle);
+
+            regPanelBottom1 = new RegPanelSet(reginfo, rfile,0,binToHex);
+            regPanelBottom2 = new RegPanelSet(reginfo, rfile,16,binToHex);
+            userRegPanelSet = new UserRegPanelSet(reginfo,regList,binToHex);
+
+            setLayout(new BorderLayout());
+            bottomPanel.setPreferredSize(rightBottomPanelSize);
+            topPanel.setPreferredSize(rightUpperPanelSize);
+            topPanel.setLayout(new FlowLayout());
+            topPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
+            bottomPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"User-Chosen Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
+            setPreferredSize(rightPanelSize);
+
+            bottomPanel.add(userRegPanelSet);
+            topPanel.add(regPanelBottom1);
+            topPanel.add(regPanelBottom2);
+            add(topPanel,BorderLayout.NORTH);
+            add(bottomPanel,BorderLayout.SOUTH);
+
+        }
+
     }
 
     public static void redraw(){
+        msg ="";
+        int status =stallStatus(cycle);
         frame.getContentPane().removeAll();
-        frame.add(new LeftSubPanel());
+        frame.add(new TopPanel());
+        frame.add(new LeftSubPanel(status));
+        frame.add(new RightSubPanel());
         frame.revalidate();
     }
 
