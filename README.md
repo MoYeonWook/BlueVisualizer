@@ -9,6 +9,7 @@ type, instance, vcd 파일이 미리 준비되어 있어야 합니다.
 
   - 아래 코드 실행.
   > cd .\out\artifacts\BlueVisualizer_jar
+  
   > java -jar .\BlueVisualizer.jar
   
 2) 3stage pipeline (lab 5)
