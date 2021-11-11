@@ -64,7 +64,7 @@ public class BlueVisualizer {
 
 
     public static void main(String[]args) throws IOException {
-        String addr = "C:/Users/ADMIN/Desktop/3stages/";
+        String addr = "src/";
         BufferedReader br = new BufferedReader(new FileReader(addr+"instance.txt"));
 
         System.out.println("Interface map parsing...");
