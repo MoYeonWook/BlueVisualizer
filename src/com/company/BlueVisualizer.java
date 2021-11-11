@@ -509,12 +509,12 @@ public class BlueVisualizer {
         private JLabel cycletxt = new JLabel("Cycle: ");
         private JTextField cycleNum = new JTextField(String.valueOf(cycle),10);
         private JTextArea description= new JTextArea(msg,5,50);
-        private JButton fir = new JButton("fir");
-        private JButton prs = new JButton("bes");
-        private JButton pre = new JButton("bef");
-        private JButton nxt = new JButton("nxt");
-        private JButton nxs = new JButton("nxs");
-        private JButton lst = new JButton("lst");
+        private JButton fir = new JButton("first cycle");
+        private JButton prs = new JButton("previous hazard");
+        private JButton pre = new JButton("previous cycle");
+        private JButton nxt = new JButton("next cycle");
+        private JButton nxs = new JButton("next stall");
+        private JButton lst = new JButton("last cycle");
 
         public LeftSubPanel(int status) {
 
