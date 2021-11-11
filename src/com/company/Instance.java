@@ -35,10 +35,10 @@ public class Instance {
 
 
 
-    public void getSub() {// 구조체의 각element별 정보를 가져옴.
+    public void getSub() {// 구조체의 각 element별 정보를 가져옴.
         Type types = BlueVisualizer.typeMap.get(this.intf);
 
-        if(this.intf==null) return; //interface가 존재하지 않으면
+        if(this.intf==null) return;
         if(types==null) return;
         int size = types.sub.size();
         ArrayList<Instance> tmp = new ArrayList<>();

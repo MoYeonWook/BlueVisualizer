@@ -27,7 +27,7 @@ public class FIFOPanel extends JScrollPane {
         setChildNode((Instance)fifo,root,binToHex);
         Ftree = new JTree(root);
         DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) Ftree.getCellRenderer();
-        System.out.println(fifo.getName()+" "+fifo.getBit());
+//        System.out.println(fifo.getName()+" "+fifo.getBit());
         if(status ==0 ) {
             getViewport().setBackground(Color.pink);
             setBorder(new LineBorder(Color.red,5));
@@ -52,7 +52,7 @@ public class FIFOPanel extends JScrollPane {
     }
 
     static void setChildNode(Instance parent,DefaultMutableTreeNode nodeP,Boolean binToHex){
-        if(parent.getChildren()==null) {System.out.println(parent.getName()); return;}
+        if(parent.getChildren()==null)  return;
         for(Instance child: parent.getChildren()){
             DefaultMutableTreeNode nodeC = new DefaultMutableTreeNode(child.getName()+" "+ BlueVisualizer.convertBin(child.getBit(),binToHex));
             nodeP.add(nodeC);

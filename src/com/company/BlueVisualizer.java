@@ -64,31 +64,31 @@ public class BlueVisualizer {
 
 
     public static void main(String[]args) throws IOException {
-        String addr = "src/";
-        BufferedReader br = new BufferedReader(new FileReader(addr+"instance.txt"));
+        String addr = "./";
+        BufferedReader br = new BufferedReader(new FileReader(addr+ "instance.txt"));
 
         System.out.println("Interface map parsing...");
         mkInterfaceMap(br);
         br.close();
 
         System.out.println("Instance symbol parsing...");
-        br= new BufferedReader(new FileReader(addr+"type.txt"));
+        br= new BufferedReader(new FileReader(addr+ "type.txt"));
         mkTypeMap(br);
 
-        typeMap.entrySet().forEach(a->{
-            Type type = a.getValue();
-            System.out.println(type.intf);
-            for(Type t:type.sub){
-                System.out.print(t.name+" ");
-            }
-            System.out.println();
-        });
+//        typeMap.entrySet().forEach(a->{
+//            Type type = a.getValue();
+//            System.out.println(type.intf);
+//            for(Type t:type.sub){
+//                System.out.print(t.name+" ");
+//            }
+//            System.out.println();
+//        });
         System.out.println("Initializing the timeline...");
-        br= new BufferedReader(new FileReader(addr+"test.vcd"));
-        mkSMTL(br);
+        br= new BufferedReader(new FileReader(addr+ "test.vcd"));
+        mkSymbolMapTimeLine(br);//make symbolmap timeline
 
 
-        for(Map.Entry<String,String> k : symbolMap.entrySet()) System.out.println(k.getKey()+" "+k.getValue());
+//        for(Map.Entry<String,String> k : symbolMap.entrySet()) System.out.println(k.getKey()+" "+k.getValue());
 
         System.out.println("Choose FIFO or register to visualize in order");
         frame = new JFrame("Visualizer");
@@ -198,7 +198,7 @@ public class BlueVisualizer {
 
         }
     }
-    private static void mkSMTL(BufferedReader br)throws IOException{
+    private static void mkSymbolMapTimeLine(BufferedReader br)throws IOException{
         String st;
         boolean defFlag = true;
         boolean initializeFlag = true;
@@ -321,7 +321,7 @@ public class BlueVisualizer {
                            tmp.enq = befInst.enq;
                        }
                    }
-                    System.out.println(name);
+//                    System.out.println(name);
                     Timeline.get(pos).put(name,tmp);
                 }
         }
@@ -389,7 +389,7 @@ public class BlueVisualizer {
         for(String str: regList){ //for register.
             if(currFIFOInfoMap.get(str)==null){
                 if(preFIFOInfoMap.get(str)==null) continue;
-                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
+//                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
                 currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
             }
 
@@ -398,7 +398,7 @@ public class BlueVisualizer {
         for(String str: rfile){ //for register.
             if(currFIFOInfoMap.get(str)==null){
                 if(preFIFOInfoMap.get(str)==null) continue;
-                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
+//                System.out.println(cycle+" "+str+" "+preFIFOInfoMap.get(str).getBit());
                 currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
             }
 
