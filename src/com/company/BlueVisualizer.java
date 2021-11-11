@@ -84,7 +84,7 @@ public class BlueVisualizer {
             System.out.println();
         });
         System.out.println("Initializing the timeline...");
-        br= new BufferedReader(new FileReader(addr+"3stage"));
+        br= new BufferedReader(new FileReader(addr+"test.vcd"));
         mkSMTL(br);
 
 
