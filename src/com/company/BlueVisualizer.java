@@ -145,8 +145,10 @@ public class BlueVisualizer {
                 int size = Integer.parseInt(part[2]);
                 String[] eles = splitWithP(st,'{','}');
                 for(String ele : eles){
-                    String[] pieces = ele.split(" ");
-                    list.add(new Type(pieces[0],pieces[1],Integer.parseInt(pieces[2])));
+                    try {
+                        String[] pieces = ele.split(" ");
+                        list.add(new Type(pieces[0], pieces[1], Integer.parseInt(pieces[2])));
+                    } catch (Exception ignored) {}
                 }
                 type = new Type(intf,size);
                 type.sub = list;

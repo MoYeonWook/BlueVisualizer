@@ -31,11 +31,9 @@ public class FIFOPanel extends JScrollPane {
         if(status ==0 ) {
             getViewport().setBackground(Color.pink);
             setBorder(new LineBorder(Color.red,5));
-            return;
         }else if(status ==1) {
             getViewport().setBackground(Color.pink);
             setBorder(new LineBorder(Color.blue,5));
-            return;
         } else if(!(fifo.full)||fifo.empty){
             getViewport().setBackground(Color.PINK);
             return;
