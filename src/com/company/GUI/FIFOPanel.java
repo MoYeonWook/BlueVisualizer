@@ -1,6 +1,7 @@
 package com.company.GUI;
 
 import com.company.BlueVisualizer;
+import com.company.Decoder;
 import com.company.FIFO;
 import com.company.Instance;
 
@@ -17,7 +18,7 @@ import java.math.BigInteger;
 public class FIFOPanel extends JScrollPane {
     FIFO fifo;
     JTree Ftree;
-
+    static Decoder decoder = new Decoder();
     public FIFOPanel(FIFO fifo, int status, int num,boolean binToHex) {
 
         setPreferredSize(new Dimension(950/(num), 450));
@@ -52,6 +53,7 @@ public class FIFOPanel extends JScrollPane {
     static void setChildNode(Instance parent,DefaultMutableTreeNode nodeP,Boolean binToHex){
         if(parent.getChildren()==null)  return;
         for(Instance child: parent.getChildren()){
+            if(child.getName().equals("inst")) System.out.println(decoder.decode(child.getBit()));
             DefaultMutableTreeNode nodeC = new DefaultMutableTreeNode(child.getName()+" "+ BlueVisualizer.convertBin(child.getBit(),binToHex));
             nodeP.add(nodeC);
             setChildNode(child,nodeC,binToHex);

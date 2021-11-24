@@ -46,9 +46,11 @@ public class BlueVisualizer {
     static protected HashMap<Integer,Integer> dataHazardRec = new HashMap<>();
     static protected HashMap<Integer,Integer> controlHazardRec = new HashMap<>();
     static protected HashMap<Integer,Integer> instRec = new HashMap<>();
+    static protected HashMap<Integer,String[]> assmRec = new HashMap<>();
     static int dataCnt = 0;
     static int controlCnt =0;
     static int instCnt =0;
+    static String[] AsmInFIFO;
 
     // Font & Size
     static Font titleFont = new Font("Franklin Gothic Heavy",Font.PLAIN,100);
@@ -109,6 +111,7 @@ public class BlueVisualizer {
                 System.out.println("Visualizing Chosen data...");
                 FIFOList = manageFIFO.getPosName();
                 regList = manageReg.getPosName();
+                AsmInFIFO = new String[FIFOList.size()];
                 for(int i =0;i<32;i++)rfile.add("rfile"+i); // add all the name of cpu register
                 for(int i =2; i<Timeline.size();i++) initializeStat(i); // start at i = 2, cycle 1 has already initialized.
                 frame.setPreferredSize(frameSize);
@@ -385,6 +388,10 @@ public class BlueVisualizer {
     public static void initializeStat(int cycle){ // 각 cycle마다 stall 발생 횟수  또한 visualize 전 cycle 별로 빠진 FIFO가 있으면 앞 cycle에서 가져와 채워 넣는다.
                                             // vcd 파일에서 cycle별로 값의 변화가 없으면 기록되지 않으므로 cycle 별로 hashmap에 없는 fifo, register가 존재한다.
 
+//        Timeline.get(cycle).get(regList.get(0)).
+
+
+        if(cycle == 1) return; //first cycle does not need fifo initializations or hazard checks.
         HashMap<String, Instance> preFIFOInfoMap = Timeline.get(cycle-1);
         HashMap<String, Instance> currFIFOInfoMap =Timeline.get(cycle);
 
@@ -426,6 +433,8 @@ public class BlueVisualizer {
         if(!currFstFifo.full || currFstFifo.empty) controlHazardRec.put(cycle,++controlCnt);
         else if( preFstFifo.full&&!currSndFifo.full) dataHazardRec.put(cycle,++dataCnt);
         if(currlastFifo.full||!currlastFifo.empty) instRec.put(cycle,++instCnt);
+
+
     }
 
     public static int  stallStatus(int cycle){
@@ -625,7 +634,7 @@ public class BlueVisualizer {
             topPanel.setPreferredSize(rightUpperPanelSize);
             topPanel.setLayout(new FlowLayout());
             topPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
-            bottomPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"User-Chosen Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
+            bottomPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"User-Selected Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
             setPreferredSize(rightPanelSize);
 
             bottomPanel.add(userRegPanelSet);
