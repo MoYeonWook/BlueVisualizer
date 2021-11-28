@@ -29,6 +29,7 @@ public class BlueVisualizer {
     static public List<HashMap<String,Instance>> Timeline = new ArrayList<>();
     static public HashSet<String> FIFOSet = new HashSet<>(); //candidate for user to choose to visualize
     static public HashSet<String> regSet= new HashSet<>(); // candidate for user to choose to visualize
+    static public Decoder decoder = new Decoder();
     static private String timeUnit;
 
 
@@ -36,7 +37,7 @@ public class BlueVisualizer {
     static List<String> regList; //user's choice will be saved here
     static List<String> rfile = new ArrayList<>();
     static public String msg="";
-    static public int cycle = 1;
+    static public int cycle = 0;
     static public boolean binToHex = false;
     static JFrame frame;
     static LeftSubPanel leftSubPanel;
@@ -113,7 +114,7 @@ public class BlueVisualizer {
                 regList = manageReg.getPosName();
                 AsmInFIFO = new String[FIFOList.size()];
                 for(int i =0;i<32;i++)rfile.add("rfile"+i); // add all the name of cpu register
-                for(int i =2; i<Timeline.size();i++) initializeStat(i); // start at i = 2, cycle 1 has already initialized.
+                for(int i =1; i<Timeline.size();i++) initializeStat(i); // start at i = 1, cycle 0 has already initialized.
                 frame.setPreferredSize(frameSize);
                 frame.pack();
                 redraw();
@@ -283,7 +284,7 @@ public class BlueVisualizer {
                             int tempos = pos;
                             FIFO befInst = null;
                             while(befInst==null&&tempos>0) befInst= (FIFO) Timeline.get(tempos--).get(fifoSymbol);
-                            if(tempos==0) currInst = new FIFO(); //temporary FIFO , will be initialized in the same cycle
+                            if(tempos==0) currInst = new FIFO(); //temporary uninitialized FIFO , will be initialized in the same cycle
                             else {
                                 currInst = new FIFO(befInst.name, befInst.bit, befInst.intf); //
                                 currInst.getSub();
@@ -391,9 +392,13 @@ public class BlueVisualizer {
 //        Timeline.get(cycle).get(regList.get(0)).
 
 
-        if(cycle == 1) return; //first cycle does not need fifo initializations or hazard checks.
+        if(cycle == 0){
+
+            return;
+        } //first cycle does not need fifo initializations or hazard checks.
         HashMap<String, Instance> preFIFOInfoMap = Timeline.get(cycle-1);
         HashMap<String, Instance> currFIFOInfoMap =Timeline.get(cycle);
+
 
         for(String str: regList){ //for register.
             if(currFIFOInfoMap.get(str)==null){
@@ -413,16 +418,47 @@ public class BlueVisualizer {
 
         }
 
+
         for(String str: FIFOList){ // if there is empty FIFO record, get it from the previous one.
             if(currFIFOInfoMap.get(str)==null){
-                if(preFIFOInfoMap.get(str)==null) return; // to ignore empty FIFO in the early cycle.
+                if(preFIFOInfoMap.get(str)==null) break; // to ignore empty FIFO in the early cycle.
                 currFIFOInfoMap.put(str,preFIFOInfoMap.get(str));
             }
         }
+
+        for(int i=0; i<FIFOList.size();i++){ //initialize asm code
+           String targetFIFOName= FIFOList.get(i);
+           FIFO currTargetFIFO = (FIFO) currFIFOInfoMap.get(targetFIFOName);
+           String asm="";
+
+           if(currTargetFIFO == null) break; // early empty FIFO. should not be filled with asm code
+           if(i==0){
+               for(Instance inst :currTargetFIFO.getChildren()){
+                   if(inst.getName().equals("inst")) { asm = decoder.decode(inst.getBit()); break;}
+               }
+           }else{ // 1) preTargetFIFO enq (true) => get preAheadFIFO asm code;
+                  // 2) preTargetFIFO deq (true) => set asm as nop;
+                  // 3) else => get preTargetFIFO asm code;
+               String aheadFifoName = FIFOList.get(i-1);
+               FIFO preTargetFIFO = (FIFO) preFIFOInfoMap.get(targetFIFOName);
+               FIFO preAheadFIFO = (FIFO) preFIFOInfoMap.get(aheadFifoName);
+               if(preTargetFIFO == null) break;
+
+               if(preTargetFIFO.enq) asm = preAheadFIFO.asm;
+               else if(preTargetFIFO.deq) asm = "nop";
+               else asm = preTargetFIFO.asm;
+           }
+           currTargetFIFO.asm = asm;
+        }
+
         Timeline.set(cycle,currFIFOInfoMap);
+
+        //initialize stall
         String fstFifoInfo = FIFOList.get(0);
         String sndFifoInfo = FIFOList.get(1);
         String lastFifoInfo = FIFOList.get(FIFOList.size()-1);
+
+
 
         FIFO currFstFifo = (FIFO) currFIFOInfoMap.get(fstFifoInfo);
         FIFO currSndFifo = (FIFO) currFIFOInfoMap.get(sndFifoInfo);
@@ -430,6 +466,7 @@ public class BlueVisualizer {
         FIFO preSndFifo = (FIFO) preFIFOInfoMap.get(sndFifoInfo);
         FIFO currlastFifo = (FIFO) currFIFOInfoMap.get(lastFifoInfo);
 
+        if(currlastFifo==null) return; //early stage.
         if(!currFstFifo.full || currFstFifo.empty) controlHazardRec.put(cycle,++controlCnt);
         else if( preFstFifo.full&&!currSndFifo.full) dataHazardRec.put(cycle,++dataCnt);
         if(currlastFifo.full||!currlastFifo.empty) instRec.put(cycle,++instCnt);
