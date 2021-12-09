@@ -10,21 +10,25 @@ import java.util.List;
 
 public class FIFOPanelSet extends Panel {
 
-    public FIFOPanelSet(int num, int status, List<String> FIFOList, HashMap<String, Instance> FIFOInfo,Boolean binToHex){
+    public FIFOPanelSet(int num, int status, List<String> FIFOList, HashMap<String, Instance> FIFOInfo,Boolean binToHex,Boolean asmMode){
             setLayout(new FlowLayout());
             setPreferredSize(new Dimension(1000,500));
             Font font =new Font("Franklin Gothic Book",Font.PLAIN,20);
             for(int i=0;i<num; i++){
                 String FifoName = FIFOList.get(i);
+                FIFO fifo = (FIFO) FIFOInfo.get(FifoName);
                 JLabel header = new JLabel(FifoName);
+                JLabel asmCode = (fifo==null) ? new JLabel("empty"):new JLabel(fifo.asm);
 //                System.out.println(FifoName);
                 header.setFont(font);
+                asmCode.setFont(font);
                 Panel panel = new Panel();
                 panel.setPreferredSize(new Dimension(950/num+5,500));
                 panel.setLayout(new FlowLayout());
-                panel.add(header);
-                if(status == i) panel.add(new FIFOPanel((FIFO)FIFOInfo.get(FifoName),status,num,binToHex));
-                else  panel.add(new FIFOPanel((FIFO)FIFOInfo.get(FifoName),-1,num,binToHex));
+                if(asmMode) panel.add(asmCode);
+                else panel.add(header);
+                if(status == i) panel.add(new FIFOPanel(fifo,status,num,binToHex));
+                else  panel.add(new FIFOPanel(fifo,-1,num,binToHex));
                 add(panel);
             }
     }

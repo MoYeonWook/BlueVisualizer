@@ -39,6 +39,7 @@ public class BlueVisualizer {
     static public String msg="";
     static public int cycle = 0;
     static public boolean binToHex = false;
+    static public boolean asmMode = false;
     static JFrame frame;
     static LeftSubPanel leftSubPanel;
     static RightSubPanel rightSubPanel;
@@ -284,7 +285,7 @@ public class BlueVisualizer {
                             int tempos = pos;
                             FIFO befInst = null;
                             while(befInst==null&&tempos>0) befInst= (FIFO) Timeline.get(tempos--).get(fifoSymbol);
-                            if(tempos==0) currInst = new FIFO(); //temporary uninitialized FIFO , will be initialized in the same cycle
+                            if(befInst==null) currInst = new FIFO(); //temporary uninitialized FIFO , will be initialized in the same cycle
                             else {
                                 currInst = new FIFO(befInst.name, befInst.bit, befInst.intf); //
                                 currInst.getSub();
@@ -432,9 +433,16 @@ public class BlueVisualizer {
            String asm="";
 
            if(currTargetFIFO == null) break; // early empty FIFO. should not be filled with asm code
+
            if(i==0){
-               for(Instance inst :currTargetFIFO.getChildren()){
-                   if(inst.getName().equals("inst")) { asm = decoder.decode(inst.getBit()); break;}
+               if(currTargetFIFO.empty||!currTargetFIFO.full) asm ="nop";
+               else {
+                   for (Instance inst : currTargetFIFO.getChildren()) {
+                       if (inst.getName().equals("inst")) {
+                           asm = decoder.decode(inst.getBit());
+                           break;
+                       }
+                   }
                }
            }else{ // 1) preTargetFIFO enq (true) => get preAheadFIFO asm code;
                   // 2) preTargetFIFO deq (true) => set asm as nop;
@@ -522,13 +530,16 @@ public class BlueVisualizer {
         private JLabel title = new JLabel("BlueVisualizer");
         private JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         private JButton binHexButton;
+        private JButton asmModeButton;
         public TopPanel(){
             binHexButton = (binToHex)? new JButton("Hexadecimal"):new JButton("Binary");
+            asmModeButton = (asmMode)? new JButton("Remove assembly") : new JButton("Show assembly");
             title.setFont(titleFont);
             title.setOpaque(true);
             title.setForeground(new Color(0,176,240));// light blue
-            buttonPanel.setPreferredSize(new Dimension(160,30));
-            binHexButton.setPreferredSize(new Dimension(130,30));
+            buttonPanel.setPreferredSize(new Dimension(180,60));
+            binHexButton.setPreferredSize(new Dimension(160,30));
+            asmModeButton.setPreferredSize(new Dimension(160,30));
             binHexButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -538,11 +549,19 @@ public class BlueVisualizer {
                     redraw();
                 }
             });
+            asmModeButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    asmMode =!asmMode ;
+                    redraw();
+                }
+            });
 
             setLayout(new BorderLayout());
             setPreferredSize(topPanelSize);
 
             buttonPanel.add(binHexButton);
+            buttonPanel.add(asmModeButton);
             add(title,BorderLayout.WEST);
             add(buttonPanel,BorderLayout.EAST);
         }
@@ -561,13 +580,13 @@ public class BlueVisualizer {
         private JButton prs = new JButton("previous hazard");
         private JButton pre = new JButton("previous cycle");
         private JButton nxt = new JButton("next cycle");
-        private JButton nxs = new JButton("next stall");
+        private JButton nxs = new JButton("next hazard");
         private JButton lst = new JButton("last cycle");
 
         public LeftSubPanel(int status) {
 
             // declare
-            fifoPanelSet = new FIFOPanelSet(FIFOList.size(),status, FIFOList, Timeline.get(cycle),binToHex);
+            fifoPanelSet = new FIFOPanelSet(FIFOList.size(),status, FIFOList, Timeline.get(cycle),binToHex,asmMode);
 
             //settings
             setLayout(new FlowLayout());

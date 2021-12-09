@@ -32,11 +32,14 @@ public class FIFOPanel extends JScrollPane {
         if(status ==0 ) {
             getViewport().setBackground(Color.pink);
             setBorder(new LineBorder(Color.red,5));
+            return;
         }else if(status ==1) {
             getViewport().setBackground(Color.pink);
             setBorder(new LineBorder(Color.blue,5));
+            return;
         } else if(!(fifo.full)||fifo.empty){
             getViewport().setBackground(Color.PINK);
+            return;
         }else if((!fifo.deq)&&(!fifo.enq)){
             getViewport().setBackground(Color.gray);
 //            setBorder(new LineBorder(Color.black));
@@ -45,7 +48,7 @@ public class FIFOPanel extends JScrollPane {
             getViewport().setBackground(Color.WHITE);
         }
 
-        System.out.println(fifo.asm);
+//        System.out.println(fifo.asm);
         Ftree.setOpaque(false);
         setViewportView(Ftree);
     }
