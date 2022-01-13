@@ -273,7 +273,6 @@ public class BVModel {
 //        Timeline.get(cycle).get(regList.get(0)).
 
         if(cycle == 0) return;  //first cycle does not need fifo initializations or hazard checks.
-        System.out.println(cycle);
 
         HashMap<String, Instance> preInfoMap = timeLine.get(cycle-1);
         HashMap<String, Instance> currInfoMap = timeLine.get(cycle);
@@ -285,10 +284,10 @@ public class BVModel {
         for(String target: FIFOList) initRegFIFO(target,preInfoMap,currInfoMap,cycle);
 
         //initialize assembly code for each FIFO
-        initAsm(preInfoMap,currInfoMap);
+        initAsm(preInfoMap,currInfoMap,cycle);
 
         //initialize FIFO status
-        initFIFOStatus(preInfoMap,currInfoMap);
+        initFIFOStatus(preInfoMap,currInfoMap,cycle);
     }
 
     private void initRegFIFO(String target,HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
@@ -298,16 +297,14 @@ public class BVModel {
         timeLine.set(cycle,currInfoMap);
     }
 
-    private void initAsm(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap){
+    private void initAsm(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
         for(int i=0; i<FIFOList.size();i++){ //initialize asm code
             String targetFIFOName= FIFOList.get(i);
             FIFO currTargetFIFO = (FIFO) currInfoMap.get(targetFIFOName);
             String asm="";
 
             if(currTargetFIFO == null) break; // early empty FIFO. should not be filled with asm code
-            if(currTargetFIFO.getChildren()==null) System.out.println("err");
             if(i==0){
-
                 if(currTargetFIFO.empty||!currTargetFIFO.full) asm ="nop";
                 else {
                     for (Instance inst : currTargetFIFO.getChildren()) {
@@ -335,14 +332,14 @@ public class BVModel {
         timeLine.set(cycle,currInfoMap);
     }
 
-    public void initFIFOStatus(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap){
+    public void initFIFOStatus(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
         boolean hazardFlag = false;
         int len = FIFOList.size();;
         for( int i =0 ; i < len ; i++){
 
             String targetFIFOname = FIFOList.get(i);
             FIFO targetFIFO = (FIFO) currInfoMap.get(targetFIFOname);
-            if(targetFIFO == null) continue;
+            if(targetFIFO == null) {System.out.println("empty"); continue; }
 
             if(targetFIFO.isFull()){
                 if(!targetFIFO.isDeq()&&!targetFIFO.isEnq())  targetFIFO.setStatusType(FIFOStatusType.StallFull); //type 3
@@ -353,16 +350,18 @@ public class BVModel {
                     String preFIFOname = FIFOList.get(i-1);
                     FIFO preFIFO = (FIFO) preInfoMap.get(preFIFOname);
                     if(preFIFO.getStatusType() == FIFOStatusType.Full) hazardFlag = true;
+                    System.out.println("hazard!");
 
                 }else if(detectControlHazard){
                     if(!currInfoMap.get("eEpoch").equals(preInfoMap.get("eEpoch"))){
                         targetFIFO.setStatusType(FIFOStatusType.CtrlHazard); // type 4
                         controlHazardRec.put(cycle,++controlHazardCnt);
+                        System.out.println("control hazard!");
                     }
                 }
             }
 
-            if(i==len - 1 && targetFIFO.isDeq())  instRec.put(cycle,++instCnt);
+            if(i==len - 1 && targetFIFO.isDeq())  {instRec.put(cycle,++instCnt); System.out.println("inst!");}
         }
 
         if(hazardFlag) hazardRec.put(cycle,++hazardCnt);

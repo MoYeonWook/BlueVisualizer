@@ -139,18 +139,18 @@ public class BVControl {
                 break;
             case "previous stall":
                 result = findStall(cycle,-1);
-                if(result==cycle) bvModel.setMsg("This is the first stall of your program"); // 수정
+                if(result==cycle) bvModel.setMsg("This is the first stall of your program"+bvModel.getMsg()); // 수정
                 break;
             case "previous":
-                if(cycle == 1) bvModel.setMsg("This is the first cycle");
+                if(cycle == 1) bvModel.setMsg("This is the first cycle"+bvModel.getMsg());
                 else result--;
                 break;
             case "next stall":
                 result = findStall(cycle,1);
-                if(result==cycle) bvModel.setMsg("This is the last stall of your program");
+                if(result==cycle) bvModel.setMsg("This is the last stall of your program"+bvModel.getMsg());
                 break;
             case "next":
-                if(cycle == bvModel.getTimeLine().size()-1) bvModel.setMsg("This is the last cycle");
+                if(cycle == bvModel.getTimeLine().size()-1) bvModel.setMsg("This is the last cycle"+bvModel.getMsg());
                 else result++;
                 break;
             case "last":
@@ -158,7 +158,7 @@ public class BVControl {
                 break;
             default:
                 result = cycle;
-                bvModel.setMsg("button error");
+                bvModel.setMsg("button error"+bvModel.getMsg());
                 break;
         }
         bvModel.setCycle(result);
@@ -178,21 +178,21 @@ public class BVControl {
 
         boolean  isHazard = false;
         int totalHazardCnt = bvModel.getHazardRec().getOrDefault(cycle,0);
-        int controlHazardCnt;
-        int instCnt;
-
         if(totalHazardCnt != 0) isHazard = true;
-
-        totalHazardCnt = findStat(bvModel.getHazardRec(),cycle);
-        controlHazardCnt = findStat(bvModel.getControlHazardRec(),cycle);
-        instCnt = findStat(bvModel.getInstRec(),cycle);
-
-        if(bvModel.canDetectControlHazard())bvModel.setMsg(bvModel.getMsg()+"Total control Hazards: "+ controlHazardCnt+"\n");
-        bvModel.setMsg(bvModel.getMsg()+"Total data Hazards: "+ totalHazardCnt+"\n");
-        bvModel.setMsg(bvModel.getMsg()+"Total Instructions: "+ instCnt+"\n");
 
         return isHazard;
     }
+
+    private void updateMsg(int cycle){
+        int totalHazardCnt = findStat(bvModel.getHazardRec(),cycle);
+        int controlHazardCnt = findStat(bvModel.getControlHazardRec(),cycle);
+        int instCnt = findStat(bvModel.getInstRec(),cycle);
+
+        if(bvModel.canDetectControlHazard())bvModel.setMsg(bvModel.getMsg()+"Total control Hazards: "+ controlHazardCnt+"\n");
+        bvModel.setMsg(bvModel.getMsg()+"Total Hazards: "+ totalHazardCnt+"\n");
+        bvModel.setMsg(bvModel.getMsg()+"Total Instructions: "+ instCnt+"\n");
+    }
+
 
     private int findStat(HashMap<Integer,Integer> hazardRec, int cycle){
         int stat;
@@ -204,10 +204,13 @@ public class BVControl {
 
 
     public void redraw(){
+
         int cycle = bvModel.getCycle();
         boolean asmMode = bvModel.isAsmMode();
         BitType bitType = bvModel.getBitRepresentation();
         HashMap<String,Instance> regFIFOInfo = bvModel.getTimeLine().get(cycle);
+        updateMsg(cycle);
+        System.out.println(bvModel.getMsg());
         bvView.getContentPane().removeAll();
         bvView.createComponent(bvModel.getFIFOList(),bvModel.getRegList(),bvModel.getRfile(),regFIFOInfo,cycle,bvModel.getMsg(),bitType,asmMode);
         bvView.adjustSize();

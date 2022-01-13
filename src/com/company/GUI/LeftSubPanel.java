@@ -21,7 +21,7 @@ public class LeftSubPanel extends Panel {
     private Panel cycleInfo = new Panel(new FlowLayout());
     private JLabel cycletxt = new JLabel("Cycle: ");
     private JTextField cycleNum = new JTextField(String.valueOf(0),10);
-    private JTextArea description= new JTextArea(5,50);
+    private JTextArea description;
     private JButton fir = new JButton("first cycle");
     private JButton prs = new JButton("previous hazard");
     private JButton pre = new JButton("previous cycle");
@@ -32,8 +32,7 @@ public class LeftSubPanel extends Panel {
     public LeftSubPanel(List<String> FIFOList, int cycle, HashMap<String, Instance> FIFOInfo, String msg, BitType bitType, Boolean asmMode) {
 
         this.fifoPanelSet = new FIFOPanelSet(FIFOList.size(),FIFOList,FIFOInfo,bitType,asmMode);
-        description.setText(msg);
-        System.out.println(msg);
+        description = new JTextArea(msg,5,50);
         cycleNum.setText(String.valueOf(cycle));
 
         //settings
