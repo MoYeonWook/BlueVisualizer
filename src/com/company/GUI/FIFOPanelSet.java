@@ -1,5 +1,6 @@
 package com.company.GUI;
 
+import com.company.BitType;
 import com.company.FIFO;
 import com.company.Instance;
 
@@ -10,10 +11,11 @@ import java.util.List;
 
 public class FIFOPanelSet extends Panel {
 
-    public FIFOPanelSet(int num, int status, List<String> FIFOList, HashMap<String, Instance> FIFOInfo,Boolean binToHex,Boolean asmMode){
+    public FIFOPanelSet(int status, List<String> FIFOList, HashMap<String, Instance> FIFOInfo, BitType bitType, Boolean asmMode){
             setLayout(new FlowLayout());
             setPreferredSize(new Dimension(1000,500));
             Font font =new Font("Franklin Gothic Book",Font.PLAIN,20);
+            int num = FIFOList.size();
             for(int i=0;i<num; i++){
                 String FifoName = FIFOList.get(i);
                 FIFO fifo = (FIFO) FIFOInfo.get(FifoName);
@@ -27,8 +29,8 @@ public class FIFOPanelSet extends Panel {
                 panel.setLayout(new FlowLayout());
                 if(asmMode) panel.add(asmCode);
                 else panel.add(header);
-                if(status == i) panel.add(new FIFOPanel(fifo,status,num,binToHex));
-                else  panel.add(new FIFOPanel(fifo,-1,num,binToHex));
+                if(status == i) panel.add(new FIFOPanel(fifo,status,num,bitType));
+                else  panel.add(new FIFOPanel(fifo,-1,num,bitType));
                 add(panel);
             }
     }

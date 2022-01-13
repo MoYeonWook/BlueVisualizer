@@ -35,11 +35,10 @@ public class Instance {
 
 
 
-    public void getSub() {// 구조체의 각 element별 정보를 가져옴.
-        Type types = BlueVisualizer.typeMap.get(this.intf);
-
-        if(this.intf==null) return;
-        if(types==null) return;
+    public void getSub(HashMap<String, Type> typeMap) {// 구조체의 각 element별 정보를 가져옴.
+        Type types =typeMap.get(this.intf);
+//        if(this.intf == null) return;
+        if(types == null) return;
         int size = types.sub.size();
         ArrayList<Instance> tmp = new ArrayList<>();
 //        System.out.println(this.bit);
@@ -54,10 +53,26 @@ public class Instance {
                 while(pointer<0){partialBit= "0"+partialBit; pointer++;} //leading zero 보충
 //                System.out.println(type.size + " " + pointer);
                 Instance inst = new Instance(type.name,partialBit, type.intf);
-                inst.getSub();
+                inst.getSub(typeMap);
                 tmp.add(0,inst);
         }
         children = tmp;
         return;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setBit(String bit) {
+        this.bit = bit;
+    }
+
+    public void setIntf(String intf) {
+        this.intf = intf;
+    }
+
+    public void setChildren(ArrayList<Instance> children) {
+        this.children = children;
     }
 }

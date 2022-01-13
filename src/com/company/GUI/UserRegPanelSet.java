@@ -1,29 +1,32 @@
 package com.company.GUI;
 
-import com.company.BlueVisualizer;
+import com.company.BitType;
 import com.company.Instance;
 
 import javax.swing.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.company.BitType.convertBin;
+
 public class UserRegPanelSet extends JPanel {
     List<String> regList;
-    Boolean binToHex;
+    BitType bitType;
+    String bit;
 //    List<UserRegPanel> userRegPanels;
-    public UserRegPanelSet(HashMap<String, Instance> instanceInfo, List<String> regList,Boolean binToHex){
+    public UserRegPanelSet(HashMap<String, Instance> instanceInfo, List<String> regList,BitType bitType){
         this.regList = regList;
-        this.binToHex = binToHex;
+        this.bitType = bitType;
         setLayout(new FlowLayout());
         setPreferredSize(new Dimension(350,170));
         int num = regList.size();
         for (int i= 0; i<num; i++){
             String name = regList.get(i);
             Instance instance = instanceInfo.get(name);
-            String bit;
             if(instance!=null){
-                bit = BlueVisualizer.convertBin(instance.getBit(),binToHex);
+                bit = BitType.convertBin(instance.getBit(),bitType);
             }else bit = "not initialized";
 //            System.out.println(name+" "+bit);
             UserRegPanel userRegPanel = new UserRegPanel(name,bit);

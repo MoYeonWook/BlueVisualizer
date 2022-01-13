@@ -21,18 +21,17 @@ public class InfoMatching extends JPanel {// step1.fifo matching.
         String[] choice = set.toArray(new String[set.size()]);
         Arrays.sort(choice);
         //declare
-
         JLabel content = new JLabel(name);
-        JComboBox<Integer> numInput = new JComboBox<Integer>(numFifo);
-        numInput.setSize(20,10);
+        JComboBox<Integer> numInput = new JComboBox<>(numFifo);
+
 
         // option
-
+        //numInput.setSize(20,10);
         upperPannel.setLayout(new FlowLayout(FlowLayout.LEFT,10,20));
         upperPannel.setSize(250,150);
         middlePanel.setLayout(new GridLayout(4,1));
         setLayout(new FlowLayout());
-        setPreferredSize(new Dimension(200,300));
+        setPreferredSize(new Dimension(240,300));
         setVisible(true);
 
         //add
@@ -58,24 +57,24 @@ public class InfoMatching extends JPanel {// step1.fifo matching.
         middlePanel.removeAll();
 
         posName = new ArrayList<>();
-        for(int i=0; i<num; i++){
+        for(int i=0; i<num; i++) {
             Panel entry = new Panel();
-            String labelName = String.valueOf(i+1)+" ";
+            String labelName = String.valueOf(i + 1) + " ";
             entry.add(new JLabel(labelName));
             posName.add(choice[0]);
-            entry.setPreferredSize(new Dimension(250,50));
-            JComboBox<String> choiceList= new JComboBox<>(choice);
+            entry.setPreferredSize(new Dimension(250, 50));
+            JComboBox<String> choiceList = new JComboBox<>(choice);
             int current = i;
 
             choiceList.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    posName.set(current,(String)choiceList.getSelectedItem());
+                    posName.set(current, (String) choiceList.getSelectedItem());
                 }
             });
             entry.add(choiceList);
             middlePanel.add(entry);
         }
-        validate();
+        revalidate();
     }
 }
