@@ -28,27 +28,40 @@ public class LeftSubPanel extends Panel {
     private JButton nxt = new JButton("next cycle");
     private JButton nxs = new JButton("next hazard");
     private JButton lst = new JButton("last cycle");
+    private Dimension buttonSize = new Dimension(130,25);
+    private Dimension buttonPanelSize = new Dimension(830,30);
 
     public LeftSubPanel(List<String> FIFOList, int cycle, HashMap<String, Instance> FIFOInfo, String msg, BitType bitType, Boolean asmMode) {
 
-        this.fifoPanelSet = new FIFOPanelSet(FIFOList.size(),FIFOList,FIFOInfo,bitType,asmMode);
+        this.fifoPanelSet = new FIFOPanelSet(FIFOList,FIFOInfo,bitType,asmMode);
         description = new JTextArea(msg,5,50);
         cycleNum.setText(String.valueOf(cycle));
 
         //settings
+        fir.setPreferredSize(buttonSize);
+        pre.setPreferredSize(buttonSize);
+        nxt.setPreferredSize(buttonSize);
+        lst.setPreferredSize(buttonSize);
+        prs.setPreferredSize(buttonSize);
+        nxs.setPreferredSize(buttonSize);
+
         setLayout(new FlowLayout());
+        buttons.setPreferredSize(buttonPanelSize);
+        buttons.setLayout(new FlowLayout(FlowLayout.LEFT));
         control.setLayout(new BorderLayout());
         description.setFont(new Font("", Font.PLAIN, 15));
+        description.setEditable(false);
         attach();
         }
 
     public void attach() {
         buttons.add(fir);
-        buttons.add(prs);
         buttons.add(pre);
         buttons.add(nxt);
-        buttons.add(nxs);
         buttons.add(lst);
+        buttons.add(prs);
+        buttons.add(nxs);
+
         cycleInfo.add(cycletxt, BorderLayout.EAST);
         cycleInfo.add(cycleNum, BorderLayout.EAST);
         control.add(buttons, BorderLayout.WEST);

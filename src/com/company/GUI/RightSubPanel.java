@@ -12,13 +12,13 @@ import java.util.List;
 
 
 public class RightSubPanel extends JPanel {
-
+    private JPanel marginPanel = new JPanel();
     private JPanel bottomPanel = new JPanel();
     private JPanel topPanel = new JPanel();
     private UserRegPanelSet userRegPanelSet;
     private RegPanelSet regPanelBottom1;
     private RegPanelSet regPanelBottom2;
-    private Font title2 = new Font("Candara Light",Font.PLAIN,30);
+    private Font title2 = new Font("Candara Light",Font.PLAIN,20);
 
 
     public RightSubPanel(List<String> regList, HashMap<String,Instance> regInfo,List<String> rfile, BitType bitType){
@@ -26,7 +26,7 @@ public class RightSubPanel extends JPanel {
         this.userRegPanelSet = new UserRegPanelSet(regInfo,regList,bitType);
         this.regPanelBottom1 = new RegPanelSet(regInfo,rfile,0,bitType);
         this.regPanelBottom2 = new RegPanelSet(regInfo,rfile,16,bitType);
-        setLayout(new BorderLayout());
+        setLayout(new FlowLayout());
         topPanel.setLayout(new FlowLayout());
         topPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
         bottomPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.black),"User-Selected Register", TitledBorder.CENTER,TitledBorder.ABOVE_TOP,title2));
@@ -37,8 +37,9 @@ public class RightSubPanel extends JPanel {
         bottomPanel.add(userRegPanelSet);
         topPanel.add(regPanelBottom1);
         topPanel.add(regPanelBottom2);
-        add(topPanel,BorderLayout.NORTH);
-        add(bottomPanel,BorderLayout.SOUTH);
+        add(marginPanel);
+        add(topPanel);
+        add(bottomPanel);
     }
 
 //    public void update(List<String> regList, HashMap<String,Instance> regInfo,List<String> rfile, Boolean bitType){
@@ -47,6 +48,14 @@ public class RightSubPanel extends JPanel {
 //        this.regPanelBottom2 = new RegPanelSet(regInfo,rfile,16,bitType);
 //    }
 
+
+    public JPanel getMarginPanel() {
+        return marginPanel;
+    }
+
+    public void setMarginPanel(JPanel marginPanel) {
+        this.marginPanel = marginPanel;
+    }
 
     public JPanel getBottomPanel() {
         return bottomPanel;

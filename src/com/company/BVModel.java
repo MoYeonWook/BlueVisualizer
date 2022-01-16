@@ -22,7 +22,6 @@ public class BVModel {
     private List<String> FIFOList;
     private List<String> regList;
     private String[] AsmInFIFO;
-
     private HashMap<Integer,Integer> hazardRec = new HashMap<>();
     private HashMap<Integer,Integer> controlHazardRec = new HashMap<>();
     private HashMap<Integer,Integer> instRec = new HashMap<>();
@@ -32,8 +31,7 @@ public class BVModel {
     private int hazardCnt = 0;
     private int controlHazardCnt =0;
     private int instCnt =0;
-    private int status;
-    private int cycle;
+    private int cycle = 1;
 
     private String msg = "";
 
@@ -74,14 +72,13 @@ public class BVModel {
                     } catch (Exception ignored) {}
                 }
                 type = new Type(intf,size);
-                type.sub = list;
+                type.setSub(list);
                 typeMap.put(intf,type);
             }
         }
     }
 
     private void mkInterfaceMap (BufferedReader br) throws IOException {
-        Pattern pattern= Pattern.compile("/data/_element_0 .");
         String st;
         String name;
         String intf;
@@ -117,7 +114,7 @@ public class BVModel {
                 mkSymbolMap(st);//symbol definition
                 if(st.matches("(.*)enddefinitions(.*)")) defFlag= false;
             }else{// record value
-                String name ="";
+                String name;
                 if(st.matches("0!")){// to determine the cycle start of the negedge clock/ is going to ignore the first initialization of dumpvar section.
                     timelineCycle++;
                     timeLine.add(new HashMap<>());
@@ -126,7 +123,7 @@ public class BVModel {
 
                 if(initializeFlag)  continue;
                 if(st.matches("#[0-9]*")) continue;
-                if(st.matches("(0|1|x)(.*)")){//for bit scalar
+                if(st.matches("([01x])(.*)")){//for bit scalar
                     name = symbolMap.get(st.substring(1));
                     String bit = st.substring(0,1);
                     boolean val = bit.equals("1");
@@ -162,7 +159,6 @@ public class BVModel {
                     String[] value= st.split(" ");
                     name = symbolMap.get(value[1]);
                     Boolean isBitVector = true;
-                    int tempos = timelineCycle;
                     if(name==null) continue;
                     String bit = value[0].substring(1);
                     currInst = referPastInstance(isBitVector,name,bit,timelineCycle);
@@ -243,11 +239,9 @@ public class BVModel {
         FIFO befInstance = null;
         FIFO currInstance;
 
-        if(befInstance == null) {
-            while (true) {// find the closest already-made-FIFO
-                befInstance = (FIFO) timeLine.get(timelineCycle--).get(instanceName);
-                if (timelineCycle <= 0 || befInstance != null) break;
-            }
+        while (true) {// find the closest already-made-FIFO
+            befInstance = (FIFO) timeLine.get(timelineCycle--).get(instanceName);
+            if (timelineCycle <= 0 || befInstance != null) break;
         }
 
         if(isBitVector) currInstance =  new FIFO(instanceName,bit, interfaceMap.getOrDefault(instanceName,"reg"));
@@ -291,8 +285,9 @@ public class BVModel {
     }
 
     private void initRegFIFO(String target,HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
-        if(currInfoMap.get(target)==null && preInfoMap.get(target)!=null){
-            currInfoMap.put(target,preInfoMap.get(target));
+        if(currInfoMap.get(target)==null){
+            if(preInfoMap.get(target) == null) currInfoMap.put(target,new FIFO(target,"0",interfaceMap.getOrDefault(target,"reg")));
+            else currInfoMap.put(target,preInfoMap.get(target));
         }
         timeLine.set(cycle,currInfoMap);
     }
@@ -334,34 +329,44 @@ public class BVModel {
 
     public void initFIFOStatus(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
         boolean hazardFlag = false;
-        int len = FIFOList.size();;
-        for( int i =0 ; i < len ; i++){
+        int len = FIFOList.size();
+
+        for( int i =0 ; i < len ; i++){ //evaluate FIFO status
 
             String targetFIFOname = FIFOList.get(i);
             FIFO targetFIFO = (FIFO) currInfoMap.get(targetFIFOname);
-            if(targetFIFO == null) {System.out.println("empty"); continue; }
+            if(targetFIFO == null||targetFIFO.getAsm().equals("empty"))  continue;
 
             if(targetFIFO.isFull()){
-                if(!targetFIFO.isDeq()&&!targetFIFO.isEnq())  targetFIFO.setStatusType(FIFOStatusType.StallFull); //type 3
+                if(!targetFIFO.isDeq()&&!targetFIFO.isEnq()){
+                    targetFIFO.setStatusType(FIFOStatusType.StallFull); //type 3
+                }
                 else targetFIFO.setStatusType(FIFOStatusType.Full); //type 1
-            }else{
+            }else if(targetFIFO.isEmpty()){
                 targetFIFO.setStatusType(FIFOStatusType.StallEmpty); // type 2
-                if (i != 0){
-                    String preFIFOname = FIFOList.get(i-1);
-                    FIFO preFIFO = (FIFO) preInfoMap.get(preFIFOname);
-                    if(preFIFO.getStatusType() == FIFOStatusType.Full) hazardFlag = true;
-                    System.out.println("hazard!");
-
-                }else if(detectControlHazard){
+                 if(i==0 && detectControlHazard){
                     if(!currInfoMap.get("eEpoch").equals(preInfoMap.get("eEpoch"))){
                         targetFIFO.setStatusType(FIFOStatusType.CtrlHazard); // type 4
                         controlHazardRec.put(cycle,++controlHazardCnt);
-                        System.out.println("control hazard!");
                     }
                 }
             }
 
-            if(i==len - 1 && targetFIFO.isDeq())  {instRec.put(cycle,++instCnt); System.out.println("inst!");}
+            if(!(targetFIFO.getStatusType()==FIFOStatusType.Full)) { // evalulate hazard occurance
+                if (i != 0) {
+                    String preFIFOname = FIFOList.get(i - 1);
+                    FIFO preFIFO = (FIFO) preInfoMap.get(preFIFOname);
+                    if (preFIFO == null) continue;
+                    if (preFIFO.getStatusType() == FIFOStatusType.Full) hazardFlag = true;
+
+                } else {
+                    hazardFlag = true;
+                }
+            }
+
+
+
+            if(i==len - 1 && targetFIFO.isDeq())  {instRec.put(cycle,++instCnt);}
         }
 
         if(hazardFlag) hazardRec.put(cycle,++hazardCnt);
@@ -501,14 +506,6 @@ public class BVModel {
 
     public void setInstCnt(int instCnt) {
         this.instCnt = instCnt;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
     }
 
     public String getMsg() {

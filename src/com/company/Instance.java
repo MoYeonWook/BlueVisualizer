@@ -9,7 +9,7 @@ public class Instance {
     String intf;
     ArrayList<Instance> children;
 
-    public Instance(){};
+    public Instance(){}
 
     public Instance(String name, String bit, String intf){
         this.name = name;
@@ -37,27 +37,23 @@ public class Instance {
 
     public void getSub(HashMap<String, Type> typeMap) {// 구조체의 각 element별 정보를 가져옴.
         Type types =typeMap.get(this.intf);
-//        if(this.intf == null) return;
         if(types == null) return;
-        int size = types.sub.size();
+
+        int size = types.getSub().size();
         ArrayList<Instance> tmp = new ArrayList<>();
-//        System.out.println(this.bit);
         int pointer = this.bit.length();
-//        System.out.println(types.intf);
-        for (int i=size-1; i>=0;i--) {// vcd 파일에서 기록된 bit value는 preceding zero value를 무시하므로 bit#0 부터 parsing해서 마지막 type 부터 첫번째 type까지 할당해야 오류가없음.
+
+        for (int i=size-1; i>=0;i--) {// vcd 파일에서 기록된 bit value는 leadingg zero를 무시하므로 bit#0 부터 parsing해서 마지막 type 부터 첫번째 type까지 할당해야 오류가없음.
                 if(pointer<0) pointer =0;// inst의 bit size와 기록된 bitvalue가 일치하지 않을 수 있으므로 pointer가 0보다 작을 수 있음. 이 경우 parsing 하고 남은 나머지를 할당.
-                Type type = types.sub.get(i);
-//                System.out.println(type.name);
-                pointer -= type.size;
-                String partialBit = this.bit.substring((pointer < 0) ? 0 : pointer, pointer + type.size);
-                while(pointer<0){partialBit= "0"+partialBit; pointer++;} //leading zero 보충
-//                System.out.println(type.size + " " + pointer);
-                Instance inst = new Instance(type.name,partialBit, type.intf);
+                Type type = types.getSub().get(i);
+                pointer -= type.getSize();
+                String partialBit = this.bit.substring(Math.max(0,pointer), pointer + type.getSize());
+//                while(pointer<0){partialBit= "0"+partialBit; pointer++;} //leading zero 보충
+                Instance inst = new Instance(type.getName(),partialBit, type.getIntf());
                 inst.getSub(typeMap);
                 tmp.add(0,inst);
         }
         children = tmp;
-        return;
     }
 
     public void setName(String name) {

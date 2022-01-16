@@ -4,38 +4,83 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashSet;
-import java.util.List;
 
 public class UserSettingPanel extends JPanel {
-    private InfoMatching manageFIFO;
-    private InfoMatching manageReg;
-    private JButton submit;
+    private JPanel middlePanel;
+    private JPanel descriptionPanel;
+    private JPanel optionPanel;
+    private InfoMatchingPanel manageFIFO;
+    private InfoMatchingPanel manageReg;
+    private JCheckBox[] options;
+    private JButton apply;
+    private String[] optionList = {
+            "Detect control Hazards (Epoch register should be implemented)",
+            "Show assembly code of each FIFO"
+    };
+    private Dimension descriptionPanelSize = new Dimension(480,50);
+    private Dimension middlePanelSize = new Dimension(430, 320);
+    private Dimension optionPanelSize = new Dimension (480, 80);
 
     public UserSettingPanel(HashSet<String> FIFOSet, HashSet<String> RegSet){
 
-        JLabel description1 = new JLabel("Choose the number of FIFO and register to visualize.");
-        JLabel description2 = new JLabel("Then match the name each.");
+        apply = new JButton("Apply");
+        JLabel description1 = new JLabel("Choose the number of FIFO and register to visualize. Then match the name each.");
+        JLabel description2 = new JLabel("The FIFO will be visualized in given order");
+        descriptionPanel = new JPanel();
+        middlePanel = new JPanel();
+        optionPanel = new JPanel();
+        createOptions();
+
         setLayout(new FlowLayout());
-        submit = new JButton("submit");
-        add(description1);
-        add(description2);
-        this.manageFIFO =new InfoMatching("FIFO",FIFOSet);
-        this.manageReg = new InfoMatching("register",RegSet);
-        add(manageFIFO);
-        add(manageReg);
-        add(submit);
+        descriptionPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        middlePanel.setLayout(new BorderLayout());
+        descriptionPanel.setPreferredSize(descriptionPanelSize);
+        middlePanel.setPreferredSize(middlePanelSize);
+        optionPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        optionPanel.setPreferredSize(optionPanelSize);
+
+        this.manageFIFO =new InfoMatchingPanel("FIFO",FIFOSet);
+        this.manageReg = new InfoMatchingPanel("Register",RegSet);
+
+        descriptionPanel.add(description1);
+        descriptionPanel.add(description2);
+        middlePanel.add(manageFIFO,"West");
+        middlePanel.add(manageReg,"East");
+        add(descriptionPanel);
+        add(middlePanel);
+        add(optionPanel);
+        add(apply);
     }
 
-    public JButton getSubmit() {
-        return submit;
+    private void createOptions(){
+        int len = optionList.length;
+        options = new JCheckBox[len];
+        for(int i = 0; i < len; i++){
+            options[i] = new JCheckBox(optionList[i]);
+            optionPanel.add(options[i]);
+        }
     }
 
-    public InfoMatching getManageFIFO() {
+    public JButton getApply() {
+        return apply;
+    }
+
+    public InfoMatchingPanel getManageFIFO() {
         return manageFIFO;
     }
 
-    public InfoMatching getManageReg() {
+    public InfoMatchingPanel getManageReg() {
         return manageReg;
+    }
+
+    public JCheckBox[] getOptions() {
+        return options;
+    }
+
+    public void setOptions(JCheckBox[] options) {
+        this.options = options;
     }
 }

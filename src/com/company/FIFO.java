@@ -5,7 +5,7 @@ public class FIFO extends Instance {
     public boolean enq;
     public boolean deq;
     public boolean empty = true;
-    public FIFOStatusType statusType;
+    public FIFOStatusType statusType = FIFOStatusType.Default;
     public String asm = "empty"; // assembly code
 
     public FIFO(String name, String bit, String intf) {

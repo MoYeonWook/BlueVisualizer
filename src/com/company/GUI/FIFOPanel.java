@@ -14,32 +14,37 @@ import java.math.BigInteger;
 
 public class FIFOPanel extends JScrollPane{
     private JTree Ftree;
-    public FIFOPanel(FIFO fifo, int status, int num,BitType bitType) {
+    int panelWidth = 950;
+    int panelHeight = 450;
+    public FIFOPanel(FIFO fifo, int num,BitType bitType) {
 
-        setPreferredSize(new Dimension(950/(num), 450));
-        if (fifo == null||fifo.getName()==null) {getViewport().setBackground(Color.white); return;}
-
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(fifo.getName());
-        setChildNode((Instance)fifo,root,bitType);
-        Ftree = new JTree(root);
-        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) Ftree.getCellRenderer();
-
+        setPreferredSize(new Dimension(panelWidth/(num), panelHeight));
+//        if (fifo == null||fifo.getName()==null) {getViewport().setBackground(Color.white); return;}
         switch(fifo.getStatusType()){
-            case StallEmpty :
-                getViewport().setBackground(Color.pink);
-                break;
-            case CtrlHazard :
-                getViewport().setBackground(Color.pink);
-                setBorder(new LineBorder(Color.red,5));
+            case Full:
+                getViewport().setBackground(Color.white);
                 break;
             case StallFull:
                 getViewport().setBackground(Color.white);
                 setBorder(new LineBorder(Color.black,5));
                 break;
+            case StallEmpty :
+                getViewport().setBackground(Color.pink);
+                return;
+            case CtrlHazard :
+                getViewport().setBackground(Color.pink);
+                setBorder(new LineBorder(Color.red,5));
+                return;
             default:
                 getViewport().setBackground(Color.white);
+                return;
         }
 
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(fifo.getName());
+        setChildNode(fifo,root,bitType);
+        Ftree = new JTree(root);
+        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) Ftree.getCellRenderer();
         Ftree.setOpaque(false);
         setViewportView(Ftree);
     }
@@ -52,7 +57,6 @@ public class FIFOPanel extends JScrollPane{
             nodeP.add(nodeC);
             setChildNode(child,nodeC,bitType);
         }
-        return;
     }
 
 

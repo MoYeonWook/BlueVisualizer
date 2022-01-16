@@ -6,12 +6,14 @@ import java.awt.*;
 public class RegPanel extends Panel {
     int i;
     String val;
+    Dimension textFieldSize = new Dimension(100,18);
+    Dimension regPanelSize = new Dimension(120,22);
     public RegPanel(int i, String val){
         this. i = i;
         this. val = val;
 
         //component
-        String name ="x"+String.valueOf(i);
+        String name ="x"+i;
         if(name.length()==2) name=" "+name;// alignment
 
         JLabel num = new JLabel(name);
@@ -19,9 +21,10 @@ public class RegPanel extends Panel {
 
         //settings
         setLayout(new FlowLayout());
-        setPreferredSize(new Dimension(120,20));
+        setPreferredSize(regPanelSize);
         tf.setEditable(false);
-        tf.setPreferredSize(new Dimension(100,15));
+        tf.setPreferredSize(textFieldSize);
+        tf.setHorizontalAlignment(2);
 
         //Insertion
         add(num);

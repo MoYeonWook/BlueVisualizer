@@ -20,7 +20,6 @@ public class RegPanelSet extends Panel {
 
         for(int i = 0 ; i<16;i++){
             String name = rfile.get(i+idx);
-//            System.out.println(name);
             Instance reg = RegInfo.get(name);
             String bit;
             if(reg==null) bit = "0";
@@ -28,19 +27,6 @@ public class RegPanelSet extends Panel {
             regs[i] = new RegPanel(i+idx,bit);
             add(regs[i]);
         }
-    }
-    private String convertBin(String bin, boolean binToHex){
-        int idx =-1;// no leading zero;
-        for(int i=0; i<bin.length();i++){
-            if(bin.charAt(i)=='0') idx = i;
-            else break;
-        }
-        if(idx == bin.length()-1) bin = "0";
-        else bin = bin.substring(idx+1);
-
-
-        if(binToHex)  return new BigInteger(bin, 2).toString(16);
-        else return bin;
     }
 
 }

@@ -9,6 +9,7 @@ public class UserRegPanel extends Panel {
     Dimension size = new Dimension(350,30);
     Dimension nameSize = new Dimension(70, 30);
     Dimension contentSize = new Dimension(270,30);
+
     public UserRegPanel(String n, String bit){
         name = new JLabel(n,SwingConstants.LEFT);
         content = new JLabel(bit,SwingConstants.CENTER);

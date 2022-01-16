@@ -20,17 +20,17 @@ public class UserRegPanelSet extends JPanel {
         this.regList = regList;
         this.bitType = bitType;
         setLayout(new FlowLayout());
-        setPreferredSize(new Dimension(350,170));
+        setPreferredSize(new Dimension(350,150));
         int num = regList.size();
-        for (int i= 0; i<num; i++){
-            String name = regList.get(i);
+
+        for (String name : regList) {
             Instance instance = instanceInfo.get(name);
-            if(instance!=null){
-                bit = BitType.convertBin(instance.getBit(),bitType);
-            }else bit = "not initialized";
-//            System.out.println(name+" "+bit);
-            UserRegPanel userRegPanel = new UserRegPanel(name,bit);
-//            userRegPanels.add(userRegPanel);
+
+            if (instance != null) {
+                bit = BitType.convertBin(instance.getBit(), bitType);
+            } else bit = "not initialized";
+
+            UserRegPanel userRegPanel = new UserRegPanel(name, bit);
             add(userRegPanel);
         }
 
