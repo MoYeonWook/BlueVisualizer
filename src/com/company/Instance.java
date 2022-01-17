@@ -7,6 +7,8 @@ public class Instance {
     String name;
     String bit;
     String intf;
+    boolean maybe = false;
+    boolean valid = true;
     ArrayList<Instance> children;
 
     public Instance(){}
@@ -14,7 +16,17 @@ public class Instance {
     public Instance(String name, String bit, String intf){
         this.name = name;
         this.bit = bit;
-        this.intf = intf;
+
+        if(intf!= null){
+            String[] checkMaybe = intf.split("_");
+
+            if(checkMaybe[0].equals("Maybe#")){
+                this.intf = intf.substring(7);
+                maybe = true;
+
+            }else this.intf =intf;
+        }
+
     }
 
     public String getName() {
@@ -33,27 +45,43 @@ public class Instance {
         return children;
     }
 
+    public boolean isMaybe() {
+        return maybe;
+    }
 
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
 
     public void getSub(HashMap<String, Type> typeMap) {// 구조체의 각 element별 정보를 가져옴.
-        Type types =typeMap.get(this.intf);
+        Type types =typeMap.get(intf);
         if(types == null) return;
 
-        int size = types.getSub().size();
+        int instanceNum = types.getSub().size();
+        int bitLength = types.getSize();
         ArrayList<Instance> tmp = new ArrayList<>();
-        int pointer = this.bit.length();
+        int pointer = bit.length();
 
-        for (int i=size-1; i>=0;i--) {// vcd 파일에서 기록된 bit value는 leadingg zero를 무시하므로 bit#0 부터 parsing해서 마지막 type 부터 첫번째 type까지 할당해야 오류가없음.
+        for (int i=instanceNum-1; i>=0;i--) {// vcd 파일에서 기록된 bit value는 leadingg zero를 무시하므로 bit#0 부터 parsing해서 마지막 type 부터 첫번째 type까지 할당해야 오류가없음.
                 if(pointer<0) pointer =0;// inst의 bit size와 기록된 bitvalue가 일치하지 않을 수 있으므로 pointer가 0보다 작을 수 있음. 이 경우 parsing 하고 남은 나머지를 할당.
                 Type type = types.getSub().get(i);
                 pointer -= type.getSize();
                 String partialBit = this.bit.substring(Math.max(0,pointer), pointer + type.getSize());
-//                while(pointer<0){partialBit= "0"+partialBit; pointer++;} //leading zero 보충
                 Instance inst = new Instance(type.getName(),partialBit, type.getIntf());
                 inst.getSub(typeMap);
                 tmp.add(0,inst);
         }
         children = tmp;
+
+        if(maybe){
+            if(bitLength >= bit.length()) valid = false;
+            else if(bit.charAt(0)=='1') valid = true;
+            else valid = false;
+        }
     }
 
     public void setName(String name) {

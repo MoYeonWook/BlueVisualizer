@@ -26,7 +26,6 @@ public class BlueVisualizer {
         BVModel bvModel = new BVModel();
         BVView bvView = new BVView("BlueVisualizer");
         BVControl bvControl = new BVControl(bvModel,bvView);
-
         System.out.println("Choose FIFO or register to visualize in order");
 
         bvControl.initialize();

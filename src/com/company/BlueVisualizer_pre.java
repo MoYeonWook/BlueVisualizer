@@ -89,7 +89,7 @@
 ////            System.out.println();
 ////        });
 //        System.out.println("Initializing the timeline...");
-//        br= new BufferedReader(new FileReader(addr+ "test.vcd"));
+//        br= new BufferedReader(new FileReader(addr+ "dump.vcd"));
 //        mkSymbolMapTimeLine(br);//make symbolmap timeline
 //
 //

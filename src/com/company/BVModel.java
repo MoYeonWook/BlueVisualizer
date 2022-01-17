@@ -48,7 +48,7 @@ public class BVModel {
         mkTypeMap(br);
         br.close();
 
-        br= new BufferedReader(new FileReader(addr+ "test.vcd"));
+        br= new BufferedReader(new FileReader(addr+ "dump.vcd"));
         mkTimeline(br);//make symbolmap timeline
         br.close();
     }
@@ -92,6 +92,7 @@ public class BVModel {
                     if (parts[i].equals("data")){
                         name = parts[i - 1];
                         intf = splitWithBrackets(parts[parts.length-1],'(',')')[0];
+                        if(parts[parts.length-1].matches("(.*)Maybe#(.*)")) intf ="Maybe#_" + intf; //check for maybe case
                         interfaceMap.put(name,intf);
                         break;
                     }
@@ -328,7 +329,6 @@ public class BVModel {
     }
 
     public void initFIFOStatus(HashMap<String, Instance> preInfoMap,HashMap<String, Instance> currInfoMap,int cycle){
-        boolean hazardFlag = false;
         int len = FIFOList.size();
 
         for( int i =0 ; i < len ; i++){ //evaluate FIFO status
@@ -340,27 +340,24 @@ public class BVModel {
             if(targetFIFO.isFull()){
                 if(!targetFIFO.isDeq()&&!targetFIFO.isEnq()){
                     targetFIFO.setStatusType(FIFOStatusType.StallFull); //type 3
-                }
-                else targetFIFO.setStatusType(FIFOStatusType.Full); //type 1
+                }else if(targetFIFO.isMaybe()&&!targetFIFO.isValid()){
+                    targetFIFO.setStatusType(FIFOStatusType.Invalid); // type 4
+                }else targetFIFO.setStatusType(FIFOStatusType.Full); //type 1
             }else if(targetFIFO.isEmpty()){
                 targetFIFO.setStatusType(FIFOStatusType.StallEmpty); // type 2
-                 if(i==0 && detectControlHazard){
-                    if(!currInfoMap.get("eEpoch").equals(preInfoMap.get("eEpoch"))){
-                        targetFIFO.setStatusType(FIFOStatusType.CtrlHazard); // type 4
-                        controlHazardRec.put(cycle,++controlHazardCnt);
-                    }
-                }
             }
 
-            if(!(targetFIFO.getStatusType()==FIFOStatusType.Full)) { // evalulate hazard occurance
+
+            if(targetFIFO.getStatusType()==FIFOStatusType.StallEmpty||targetFIFO.getStatusType()==FIFOStatusType.Invalid) { // evalulate hazard occurance
                 if (i != 0) {
                     String preFIFOname = FIFOList.get(i - 1);
                     FIFO preFIFO = (FIFO) preInfoMap.get(preFIFOname);
                     if (preFIFO == null) continue;
-                    if (preFIFO.getStatusType() == FIFOStatusType.Full) hazardFlag = true;
+                    if (preFIFO.getStatusType() == FIFOStatusType.Full||preFIFO.getStatusType()==FIFOStatusType.StallFull)
+                        hazardRec.put(cycle,++hazardCnt);
 
                 } else {
-                    hazardFlag = true;
+                    hazardRec.put(cycle,++hazardCnt);
                 }
             }
 
@@ -369,7 +366,12 @@ public class BVModel {
             if(i==len - 1 && targetFIFO.isDeq())  {instRec.put(cycle,++instCnt);}
         }
 
-        if(hazardFlag) hazardRec.put(cycle,++hazardCnt);
+        if(detectControlHazard&&preInfoMap.get("eEpoch")!=null){
+            if(!currInfoMap.get("eEpoch").equals(preInfoMap.get("eEpoch"))){
+                controlHazardRec.put(cycle,++controlHazardCnt);
+            }
+        }
+
     }
 
 

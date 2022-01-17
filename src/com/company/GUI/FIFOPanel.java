@@ -31,11 +31,12 @@ public class FIFOPanel extends JScrollPane{
             case StallEmpty :
                 getViewport().setBackground(Color.pink);
                 return;
-            case CtrlHazard :
-                getViewport().setBackground(Color.pink);
-                setBorder(new LineBorder(Color.red,5));
+            case Invalid:
+                getViewport().setBackground(Color.white);
+                getViewport().setLayout(new FlowLayout());
+                getViewport().add(new JLabel("Invalid (maybe type)"));
                 return;
-            default:
+           default:
                 getViewport().setBackground(Color.white);
                 return;
         }
@@ -44,6 +45,7 @@ public class FIFOPanel extends JScrollPane{
         DefaultMutableTreeNode root = new DefaultMutableTreeNode(fifo.getName());
         setChildNode(fifo,root,bitType);
         Ftree = new JTree(root);
+        exapndAllNodes(Ftree);
         DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) Ftree.getCellRenderer();
         Ftree.setOpaque(false);
         setViewportView(Ftree);
@@ -56,6 +58,15 @@ public class FIFOPanel extends JScrollPane{
             DefaultMutableTreeNode nodeC = new DefaultMutableTreeNode(child.getName()+" "+ BitType.convertBin(child.getBit(),bitType));
             nodeP.add(nodeC);
             setChildNode(child,nodeC,bitType);
+        }
+    }
+
+    private void exapndAllNodes(JTree tree){
+        int j = tree.getRowCount();
+        int i = 0;
+        while(i<j){
+            tree.expandRow(i++);
+            j = tree.getRowCount();
         }
     }
 

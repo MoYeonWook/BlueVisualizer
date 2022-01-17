@@ -99,9 +99,7 @@ public class BVControl {
                         valueName.removeAllItems();
                         topSubPanel.getValueSearchPanel().getValue().setText("");
                         String FIFOName = topSubPanel.getValueSearchPanel().getFIFOName().getSelectedItem().toString();
-                        System.out.println(FIFOName);
                         String FIFOType = bvModel.getInterfaceMap().get(FIFOName);
-                        System.out.println(FIFOType);
                         List<String> subtypes = showSubtypes(FIFOType);
                         for(String subtype: subtypes){
                             valueName.addItem(subtype);
@@ -214,10 +212,14 @@ public class BVControl {
         return subtypes;
     }
     private boolean compareValue(Instance instance, String valueName, String value){
+        if(instance == null) return false;
         String bit = instance.getBit();
         if(bit ==null) return false;
-        bit =  BitType.convertBin(bit,bvModel.getBitRepresentation());
-        if(instance.getName().equals(valueName)&&bit.equals(value)) return true;
+        if(instance.getName().equals(valueName)){
+            bit =  BitType.convertBin(bit,bvModel.getBitRepresentation());
+            if(bit.equals(value)) return true;
+            else return false;
+        }
         if(instance.getChildren()==null) return false;
         else{
             for(Instance i : instance.getChildren()) {
