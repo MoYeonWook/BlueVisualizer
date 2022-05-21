@@ -1,6 +1,11 @@
 package com.company;
 
-import com.company.GUI.*;
+import com.company.View.*;
+import com.company.Model.*;
+import com.company.View.LeftSubPanel.LeftSubPanel;
+import com.company.View.RightSubPanel.RightSubPanel;
+import com.company.View.TopSubPanel.TopSubPanel;
+import com.company.View.UserSettingPanel.UserSettingPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -23,6 +28,8 @@ public class BVControl {
     public void initialize(){
         bvView.createUserSettingPanel(bvModel.getFIFOSet(), bvModel.getRegSet());
         UserSettingPanel userSettingPanel= bvView.getUserSettingPanel();
+        Thread preprocessor = new Thread(new Initializer(bvModel,bvView));
+
         //options number
         int CONTROLHAZARD = 0;
         int ASMMODE = 1;
@@ -32,15 +39,16 @@ public class BVControl {
                 .addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        System.out.println("Visualizing Chosen data...");
-                        bvModel.setFIFOList (userSettingPanel.getManageFIFO().getPosName());
-                        bvModel.setRegList(userSettingPanel.getManageReg().getPosName());
-                        bvModel.setAsmInFIFO(new String[bvModel.getFIFOList().size()]);
-                        for(int i =0;i<32;i++) bvModel.getRfile().add("rfile"+i); // add all the name of cpu register
-                        for(int i =0; i<bvModel.getTimeLine().size();i++) bvModel.initializeStat(i); // start at i = 1, cycle 0 has already initialized.
                         bvView.setPreferredSize(bvView.getFrameSize());
                         bvView.pack();
                         bvView.setResizable(false);
+                        bvModel.setFIFOList (bvView.getUserSettingPanel().getManageFIFO().getPosName());
+                        bvModel.setRegList(bvView.getUserSettingPanel().getManageReg().getPosName());
+                        bvModel.setAsmInFIFO(new String[bvModel.getFIFOList().size()]);
+                        for(int i =0;i<32;i++) bvModel.getRfile().add("rfile"+i); // add all the name of cpu register
+                        redraw();
+
+                        preprocessor.run();
                         redraw();
                     }
                 });
@@ -315,10 +323,7 @@ public class BVControl {
         }
     }
 
-
-
     public void redraw(){
-
         int cycle = bvModel.getCycle();
         boolean asmMode = bvModel.isAsmMode();
         BitType bitType = bvModel.getBitRepresentation();
@@ -331,5 +336,21 @@ public class BVControl {
         addListener();
         bvView.revalidate();
         bvModel.setMsg("");
+    }
+}
+
+class Initializer implements Runnable{
+    BVModel bvModel;
+    BVView bvView;
+
+    public Initializer(BVModel model, BVView view){
+        bvModel = model;
+        bvView = view;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Visualizing Chosen data...");
+        for(int i =0; i<bvModel.getTimeLine().size();i++) bvModel.initializeStat(i); // start at i = 1, cycle 0 has already initialized.
     }
 }
